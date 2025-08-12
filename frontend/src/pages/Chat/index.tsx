@@ -43,9 +43,25 @@ const Chat = () => {
   })
 
   useEffect(() => {
-    connect()
-    return () => disconnect()
-  }, [connect, disconnect])
+    let mounted = true
+    
+    const initConnection = async () => {
+      if (mounted) {
+        try {
+          await connect()
+        } catch (error) {
+          console.error('Failed to connect:', error)
+        }
+      }
+    }
+    
+    initConnection()
+    
+    return () => {
+      mounted = false
+      disconnect()
+    }
+  }, []) // Empty dependency array - only run once on mount
 
   const handleSendMessage = async (content: string) => {
     if (!content.trim() || !isConnected) return

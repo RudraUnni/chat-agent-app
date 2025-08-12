@@ -18,7 +18,12 @@ class ConnectionManager:
             self.active_connections.remove(websocket)
 
     async def send_personal_message(self, message: dict, websocket: WebSocket):
-        await websocket.send_text(json.dumps(message))
+        try:
+            await websocket.send_text(json.dumps(message))
+        except Exception as e:
+            print(f"⚠️ Failed to send message: {e}")
+            self.disconnect(websocket)
+            raise
 
 manager = ConnectionManager()
 
@@ -28,13 +33,17 @@ async def websocket_chat_endpoint(websocket: WebSocket):
     await manager.connect(websocket)
     print("✅ Client connected!")
     
-    # Send welcome message
-    welcome_msg = {
-        "type": "system",
-        "content": "Connected to chat server",
-        "timestamp": datetime.now().isoformat()
-    }
-    await manager.send_personal_message(welcome_msg, websocket)
+    try:
+        # Send welcome message
+        welcome_msg = {
+            "type": "system",
+            "content": "Connected to chat server",
+            "timestamp": datetime.now().isoformat()
+        }
+        await manager.send_personal_message(welcome_msg, websocket)
+    except Exception as e:
+        print(f"⚠️ Could not send welcome message: {e}")
+        # Connection might already be closed, continue anyway
     
     try:
         while True:
@@ -54,8 +63,12 @@ async def websocket_chat_endpoint(websocket: WebSocket):
                         "timestamp": datetime.now().isoformat()
                     }
                     
-                    await manager.send_personal_message(response, websocket)
-                    print(f"📤 Sent: {response}")
+                    try:
+                        await manager.send_personal_message(response, websocket)
+                        print(f"📤 Sent: {response}")
+                    except Exception:
+                        print("❌ Failed to send response, client disconnected")
+                        break
                 
             except json.JSONDecodeError:
                 print("❌ Invalid JSON received")
@@ -69,6 +82,10 @@ async def websocket_chat_endpoint(websocket: WebSocket):
     except WebSocketDisconnect:
         manager.disconnect(websocket)
         print("🔌 Client disconnected normally")
+    except ConnectionResetError:
+        manager.disconnect(websocket)
+        print("🔌 Client connection reset")
     except Exception as e:
         manager.disconnect(websocket)
-        print(f"❌ Connection error: {e}")
+        if "no close frame received" not in str(e).lower():
+            print(f"❌ Connection error: {e}")

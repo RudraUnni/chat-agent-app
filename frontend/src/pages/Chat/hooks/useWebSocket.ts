@@ -30,16 +30,26 @@ const useWebSocket = ({
   const reconnectTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null)
   const reconnectAttempts = useRef(0)
   const maxReconnectAttempts = 5
+  const isUnmounting = useRef(false)
 
   const connect = useCallback(async (): Promise<void> => {
     return new Promise((resolve, reject) => {
       try {
-        // Close existing connection
-        if (ws.current) {
-          ws.current.close()
+        // Don't create a new connection if one already exists and is open/connecting
+        if (ws.current && (ws.current.readyState === WebSocket.OPEN || ws.current.readyState === WebSocket.CONNECTING)) {
+          console.log('WebSocket already connected or connecting')
+          if (ws.current.readyState === WebSocket.OPEN) {
+            resolve()
+          }
+          return
+        }
+        
+        // Close existing connection if it's in a closed or closing state
+        if (ws.current && (ws.current.readyState === WebSocket.CLOSING || ws.current.readyState === WebSocket.CLOSED)) {
+          ws.current = null
         }
 
-        const wsUrl = 'ws://localhost:8000/ws'
+        const wsUrl = 'ws://localhost:8000/ws/chat'
         ws.current = new WebSocket(wsUrl)
 
         ws.current.onopen = () => {
@@ -57,13 +67,17 @@ const useWebSocket = ({
             
             switch (data.type) {
               case 'message':
+              case 'assistant':
                 onMessage?.(data)
+                break
+              case 'system':
+                console.log('System message:', data.content)
                 break
               case 'typing':
                 onTyping?.(true)
                 break
               case 'error':
-                onError?.(String((data as any).data?.error ?? (data as any).data?.message ?? 'Unknown error'))
+                onError?.(data.content ?? 'Unknown error')
                 break
               default:
                 console.log('Unknown message type:', data.type)
@@ -79,8 +93,8 @@ const useWebSocket = ({
           setIsConnected(false)
           onDisconnect?.()
 
-          // Attempt to reconnect if not a normal closure
-          if (event.code !== 1000 && reconnectAttempts.current < maxReconnectAttempts) {
+          // Attempt to reconnect if not a normal closure and not unmounting
+          if (!isUnmounting.current && event.code !== 1000 && reconnectAttempts.current < maxReconnectAttempts) {
             const timeout = Math.pow(2, reconnectAttempts.current) * 1000 // Exponential backoff
             console.log(`Attempting to reconnect in ${timeout}ms... (${reconnectAttempts.current + 1}/${maxReconnectAttempts})`)
             
@@ -113,8 +127,11 @@ const useWebSocket = ({
   }, [onMessage, onTyping, onError, onConnect, onDisconnect])
 
   const disconnect = useCallback(() => {
+    isUnmounting.current = true
+    
     if (reconnectTimeoutRef.current) {
       clearTimeout(reconnectTimeoutRef.current)
+      reconnectTimeoutRef.current = null
     }
     
     if (ws.current) {
