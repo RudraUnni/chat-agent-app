@@ -2,30 +2,36 @@ import MessageList from './components/MessageList'
 import MessageInput from './components/MessageInput'
 import TypingIndicator from './components/TypingIndicator'
 import { AlertCircle, Wifi, WifiOff } from 'lucide-react'
-import { useChatStore } from '../../store/chatStore'
+import { 
+  useAppDispatch, 
+  useMessages, 
+  useIsConnected, 
+  useIsTyping, 
+  useConnectionError 
+} from '../../store/hooks'
+import { sendChatMessage } from '../../store/actions/websocketActions'
+import { setConnectionError } from '../../store/slices/connectionSlice'
 
 const Chat = () => {
-  // Get state and actions from the global store
-  const messages = useChatStore((state) => state.messages)
-  const isConnected = useChatStore((state) => state.isConnected)
-  const isTyping = useChatStore((state) => state.isTyping)
-  const connectionError = useChatStore((state) => state.connectionError)
-  const sendMessage = useChatStore((state) => state.sendMessage)
-  const setError = useChatStore((state) => state.setError)
+  const dispatch = useAppDispatch()
+  const messages = useMessages()
+  const isConnected = useIsConnected()
+  const isTyping = useIsTyping()
+  const connectionError = useConnectionError()
 
   const handleSendMessage = async (content: string) => {
     if (!content.trim() || !isConnected) return
 
     try {
-      await sendMessage(content)
+      dispatch(sendChatMessage(content))
     } catch (error) {
       console.error('Failed to send message:', error)
-      setError('Failed to send message. Please try again.')
+      dispatch(setConnectionError('Failed to send message. Please try again.'))
     }
   }
 
   const clearError = () => {
-    setError(null)
+    dispatch(setConnectionError(null))
   }
 
   return (

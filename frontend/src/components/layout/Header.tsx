@@ -1,7 +1,7 @@
 import { Link, useLocation } from 'react-router-dom'
 import { MessageCircle, Home, Wifi, WifiOff } from 'lucide-react'
 import clsx from 'clsx'
-import { useIsConnected } from '../../store/chatStore'
+import { useIsConnected } from '../../store/hooks'
 
 const Header = () => {
   const location = useLocation()

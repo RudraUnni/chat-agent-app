@@ -1,34 +1,34 @@
 import { useEffect } from 'react'
 import type { ReactNode } from 'react'
-import { useChatStore } from '../store/chatStore'
+import { useAppDispatch, useIsConnected } from '../store/hooks'
+import { connectWebSocket, disconnectWebSocket } from '../store/actions/websocketActions'
+import { setConnectionError } from '../store/slices/connectionSlice'
 
 interface WebSocketProviderProps {
   children: ReactNode
 }
 
 export const WebSocketProvider = ({ children }: WebSocketProviderProps) => {
-  const connect = useChatStore((state) => state.connect)
-  const disconnect = useChatStore((state) => state.disconnect)
+  const dispatch = useAppDispatch()
+  const isConnected = useIsConnected()
 
   useEffect(() => {
     // Connect when app mounts
-    connect().catch(console.error)
+    dispatch(connectWebSocket())
 
     // Cleanup on app unmount
     return () => {
-      disconnect()
+      dispatch(disconnectWebSocket())
     }
-  }, []) // Empty dependency - only run once
+  }, [dispatch])
 
-  // Optional: Handle page visibility changes to reconnect when user returns
+  // Handle page visibility changes to reconnect when user returns
   useEffect(() => {
     const handleVisibilityChange = () => {
-      if (!document.hidden) {
-        // Page became visible, ensure connection
-        const state = useChatStore.getState()
-        if (!state.isConnected && !state.ws) {
-          connect().catch(console.error)
-        }
+      if (!document.hidden && !isConnected) {
+        // Page became visible and not connected, reconnect
+        console.log('Page visible, reconnecting...')
+        dispatch(connectWebSocket())
       }
     }
 
@@ -37,18 +37,18 @@ export const WebSocketProvider = ({ children }: WebSocketProviderProps) => {
     return () => {
       document.removeEventListener('visibilitychange', handleVisibilityChange)
     }
-  }, [connect])
+  }, [dispatch, isConnected])
 
-  // Optional: Handle online/offline events
+  // Handle online/offline events
   useEffect(() => {
     const handleOnline = () => {
       console.log('Network online, reconnecting...')
-      connect().catch(console.error)
+      dispatch(connectWebSocket())
     }
 
     const handleOffline = () => {
       console.log('Network offline')
-      useChatStore.getState().setError('Network connection lost')
+      dispatch(setConnectionError('Network connection lost'))
     }
 
     window.addEventListener('online', handleOnline)
@@ -58,7 +58,7 @@ export const WebSocketProvider = ({ children }: WebSocketProviderProps) => {
       window.removeEventListener('online', handleOnline)
       window.removeEventListener('offline', handleOffline)
     }
-  }, [connect])
+  }, [dispatch])
 
   return <>{children}</>
 }

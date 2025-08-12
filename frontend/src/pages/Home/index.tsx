@@ -1,6 +1,6 @@
 import { Link } from 'react-router-dom'
 import { MessageCircle, ArrowRight, Sparkles, Zap, Shield, Hash } from 'lucide-react'
-import { useMessages, useIsConnected } from '../../store/chatStore'
+import { useMessages, useIsConnected } from '../../store/hooks'
 
 const Home = () => {
   const messages = useMessages()
