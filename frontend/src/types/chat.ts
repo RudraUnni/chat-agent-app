@@ -2,7 +2,7 @@ export interface ChatMessage {
   id: string
   content: string
   role: 'user' | 'assistant'
-  timestamp: Date
+  timestamp: string
   status?: 'sending' | 'sent' | 'delivered' | 'error'
 }
 
@@ -10,8 +10,8 @@ export interface ChatSession {
   id: string
   title: string
   messages: ChatMessage[]
-  createdAt: Date
-  updatedAt: Date
+  createdAt: string
+  updatedAt: string
 }
 
 export interface WsMessage {

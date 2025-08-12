@@ -88,7 +88,7 @@ export const useChatStore = create<ChatState>()(
                         id: Date.now().toString(),
                         content: data.content || '',
                         role: 'assistant',
-                        timestamp: new Date(),
+                        timestamp: new Date().toISOString(),
                         status: 'sent'
                       })
                       set({ isTyping: false })
@@ -175,7 +175,7 @@ export const useChatStore = create<ChatState>()(
           id: Date.now().toString(),
           content: content.trim(),
           role: 'user',
-          timestamp: new Date(),
+          timestamp: new Date().toISOString(),
           status: 'sending'
         }
         

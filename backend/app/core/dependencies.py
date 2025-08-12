@@ -8,7 +8,7 @@ from app.services.workflow.registry import WorkflowRegistry
 
 def get_llm_service():
     """Dependency for LLM service"""
-    if not settings.openai_api_key and not settings.anthropic_api_key:
+    if not settings.openai_api_key:
         raise HTTPException(
             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
             detail="No LLM API keys configured"

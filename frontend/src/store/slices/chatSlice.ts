@@ -73,7 +73,7 @@ const chatSlice = createSlice({
               id: Date.now().toString(),
               content: content || '',
               role: 'assistant',
-              timestamp: new Date(),
+              timestamp: new Date().toISOString(),
               status: 'sent'
             })
             state.isTyping = false

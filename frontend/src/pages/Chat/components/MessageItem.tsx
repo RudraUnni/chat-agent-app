@@ -23,8 +23,9 @@ const MessageItem = ({ message }: MessageItemProps) => {
     }
   }
 
-  const formatTime = (date: Date) => {
+  const formatTime = (isoTimestamp: string) => {
     try {
+      const date = new Date(isoTimestamp)
       return formatDistanceToNow(date, { addSuffix: true })
     } catch {
       return 'Just now'

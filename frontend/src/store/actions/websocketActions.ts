@@ -26,7 +26,7 @@ export const sendChatMessage = (content: string) => (dispatch: AppDispatch) => {
     id: Date.now().toString(),
     content: content.trim(),
     role: 'user',
-    timestamp: new Date(),
+    timestamp: new Date().toISOString(),
     status: 'sending'
   }
   
