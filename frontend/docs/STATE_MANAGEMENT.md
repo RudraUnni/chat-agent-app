@@ -215,8 +215,8 @@ Max attempts: 5
 {
   chat: {
     messages: [
-      { id: "1", content: "Hello", role: "user", timestamp: Date },
-      { id: "2", content: "Hi!", role: "assistant", timestamp: Date }
+      { id: "1", content: "Hello", role: "user", timestamp: 1690000000000 },
+      { id: "2", content: "Hi!", role: "assistant", timestamp: 1690000005000 }
     ],
     isTyping: false,
     error: null

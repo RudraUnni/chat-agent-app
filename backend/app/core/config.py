@@ -11,8 +11,6 @@ class Settings(BaseSettings):
     
     # LLM Configuration
     openai_api_key: Optional[str] = None
-    anthropic_api_key: Optional[str] = None
-    default_llm_provider: str = "openai"
     default_llm_model: str = "gpt-4o-mini"
     
     # API Configuration

@@ -52,8 +52,8 @@ const chatSlice = createSlice({
     },
     
     // Action for handling incoming WebSocket messages
-    handleIncomingMessage: (state, action: PayloadAction<{ type: string; content?: string }>) => {
-      const { type, content } = action.payload
+    handleIncomingMessage: (state, action: PayloadAction<{ type: string; content?: string; timestampMs?: number }>) => {
+      const { type, content, timestampMs } = action.payload
       
       switch (type) {
         case 'assistant':
@@ -73,7 +73,7 @@ const chatSlice = createSlice({
               id: Date.now().toString(),
               content: content || '',
               role: 'assistant',
-              timestamp: new Date(),
+              timestamp: typeof timestampMs === 'number' ? timestampMs : Date.now(),
               status: 'sent'
             })
             state.isTyping = false

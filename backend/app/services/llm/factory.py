@@ -17,13 +17,6 @@ class LLMFactory:
                 raise ValueError("OpenAI API key not provided")
             return OpenAIProvider(key, settings.default_llm_model)
         
-        elif provider == "anthropic":
-            from app.services.llm.anthropic import AnthropicProvider
-            key = api_key or settings.anthropic_api_key
-            if not key:
-                raise ValueError("Anthropic API key not provided")
-            return AnthropicProvider(key)
-        
         else:
             raise ValueError(f"Unknown LLM provider: {provider}")
     
@@ -33,6 +26,4 @@ class LLMFactory:
         providers = []
         if settings.openai_api_key:
             providers.append("openai")
-        if settings.anthropic_api_key:
-            providers.append("anthropic")
         return providers

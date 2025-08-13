@@ -59,7 +59,8 @@ export const websocketMiddleware: Middleware<{}, RootState> = (store) => {
         // Handle all other message types
         store.dispatch(handleIncomingMessage({
           type: data.type,
-          content: data.content
+          content: data.content,
+          timestampMs: typeof data.timestamp === 'string' ? Date.parse(data.timestamp) : undefined
         }))
       } catch (err) {
         console.error('Failed to parse WebSocket message:', err)
