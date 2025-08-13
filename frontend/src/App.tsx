@@ -3,16 +3,19 @@ import Layout from './components/layout/Layout'
 import Chat from './pages/Chat'
 import Home from './pages/Home'
 import ErrorBoundary from './components/common/ErrorBoundary'
+import { WebSocketProvider } from './providers/WebSocketProvider'
 
 function App() {
   return (
     <ErrorBoundary>
-      <Layout>
-        <Routes>
-          <Route path="/" element={<Home />} />
-          <Route path="/chat" element={<Chat />} />
-        </Routes>
-      </Layout>
+      <WebSocketProvider>
+        <Layout>
+          <Routes>
+            <Route path="/" element={<Home />} />
+            <Route path="/chat" element={<Chat />} />
+          </Routes>
+        </Layout>
+      </WebSocketProvider>
     </ErrorBoundary>
   )
 }

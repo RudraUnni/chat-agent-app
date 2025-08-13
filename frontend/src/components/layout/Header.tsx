@@ -1,9 +1,11 @@
 import { Link, useLocation } from 'react-router-dom'
-import { MessageCircle, Home } from 'lucide-react'
+import { MessageCircle, Home, Wifi, WifiOff } from 'lucide-react'
 import clsx from 'clsx'
+import { useIsConnected } from '../../store/hooks'
 
 const Header = () => {
   const location = useLocation()
+  const isConnected = useIsConnected()
 
   const navItems = [
     { path: '/', label: 'Home', icon: Home },
@@ -24,9 +26,26 @@ const Header = () => {
             </span>
           </Link>
 
-          {/* Navigation */}
-          <nav className="flex space-x-1">
-            {navItems.map(({ path, label, icon: Icon }) => (
+          {/* Connection Status & Navigation */}
+          <div className="flex items-center space-x-4">
+            {/* Connection Status */}
+            <div className="flex items-center">
+              {isConnected ? (
+                <div className="flex items-center text-green-600">
+                  <Wifi className="w-4 h-4 mr-1" />
+                  <span className="text-xs font-medium">Online</span>
+                </div>
+              ) : (
+                <div className="flex items-center text-gray-400">
+                  <WifiOff className="w-4 h-4 mr-1" />
+                  <span className="text-xs font-medium">Offline</span>
+                </div>
+              )}
+            </div>
+            
+            {/* Navigation */}
+            <nav className="flex space-x-1">
+              {navItems.map(({ path, label, icon: Icon }) => (
               <Link
                 key={path}
                 to={path}
@@ -41,7 +60,8 @@ const Header = () => {
                 <span>{label}</span>
               </Link>
             ))}
-          </nav>
+            </nav>
+          </div>
         </div>
       </div>
     </header>

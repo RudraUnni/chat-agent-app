@@ -1,79 +1,37 @@
-import { useEffect } from 'react'
 import MessageList from './components/MessageList'
 import MessageInput from './components/MessageInput'
 import TypingIndicator from './components/TypingIndicator'
-import useChat from './hooks/useChat'
-import useWebSocket from './hooks/useWebSocket'
-import type { ChatMessage, WsMessage } from '../../types/chat'
 import { AlertCircle, Wifi, WifiOff } from 'lucide-react'
+import { 
+  useAppDispatch, 
+  useMessages, 
+  useIsConnected, 
+  useIsTyping, 
+  useConnectionError 
+} from '../../store/hooks'
+import { sendChatMessage } from '../../store/actions/websocketActions'
+import { setConnectionError } from '../../store/slices/connectionSlice'
 
 const Chat = () => {
-  const { 
-    messages, 
-    isTyping, 
-    error, 
-    addMessage, 
-    setIsTyping, 
-    setError,
-    clearError 
-  } = useChat()
-  
-  const { 
-    isConnected, 
-    sendMessage, 
-    connect, 
-    disconnect 
-  } = useWebSocket({
-    onMessage: (data: WsMessage) => {
-      addMessage({
-        id: Date.now().toString(),
-        content: data.content ?? '',
-        role: 'assistant',
-        timestamp: new Date(),
-        status: 'sent'
-      })
-      setIsTyping(false)
-    },
-    onTyping: (typing) => {
-      setIsTyping(typing)
-    },
-    onError: (error) => {
-      setError(error)
-    }
-  })
-
-  useEffect(() => {
-    connect()
-    return () => disconnect()
-  }, [connect, disconnect])
+  const dispatch = useAppDispatch()
+  const messages = useMessages()
+  const isConnected = useIsConnected()
+  const isTyping = useIsTyping()
+  const connectionError = useConnectionError()
 
   const handleSendMessage = async (content: string) => {
     if (!content.trim() || !isConnected) return
 
-    // Add user message immediately
-    const userMessage: ChatMessage = {
-      id: Date.now().toString(),
-      content: content.trim(),
-      role: 'user' as const,
-      timestamp: new Date(),
-      status: 'sending' as const
-    }
-    
-    addMessage(userMessage)
-    clearError()
-
     try {
-      // Send via WebSocket
-      await sendMessage({ type: 'message', content: content.trim(), timestamp: new Date().toISOString() })
-      
-      // Update message status
-      addMessage({ ...userMessage, status: 'sent' })
-      setIsTyping(true)
+      dispatch(sendChatMessage(content))
     } catch (error) {
       console.error('Failed to send message:', error)
-      setError('Failed to send message. Please try again.')
-      addMessage({ ...userMessage, status: 'error' })
+      dispatch(setConnectionError('Failed to send message. Please try again.'))
     }
+  }
+
+  const clearError = () => {
+    dispatch(setConnectionError(null))
   }
 
   return (
@@ -97,10 +55,10 @@ const Chat = () => {
       </div>
 
       {/* Error Display */}
-      {error && (
+      {connectionError && (
         <div className="mx-4 mt-4 p-3 bg-red-50 border border-red-200 rounded-lg flex items-center">
           <AlertCircle className="w-5 h-5 text-red-500 mr-2 flex-shrink-0" />
-          <span className="text-red-700">{error}</span>
+          <span className="text-red-700">{connectionError}</span>
           <button
             onClick={clearError}
             className="ml-auto text-red-500 hover:text-red-700"

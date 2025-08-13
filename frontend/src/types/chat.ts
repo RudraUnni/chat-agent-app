@@ -15,7 +15,7 @@ export interface ChatSession {
 }
 
 export interface WsMessage {
-  type: 'message' | 'typing' | 'error' | 'connected' | 'disconnected'
+  type: 'message' | 'typing' | 'error' | 'connected' | 'disconnected' | 'system' | 'assistant'
   content?: string
   timestamp?: string
   sessionId?: string
