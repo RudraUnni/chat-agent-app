@@ -1,3 +1,3 @@
-from workflows.medical.pubmed_research import PubMedResearchWorkflow
+from .workflow import PubMedResearchWorkflow
 
-__all__ = ['PubMedResearchWorkflow']
+__all__ = ["PubMedResearchWorkflow"]
