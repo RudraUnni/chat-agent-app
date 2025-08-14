@@ -17,9 +17,9 @@ class PubMedResearchWorkflow(BaseWorkflow):
         input_data: Dict[str, Any],
         context: Optional[WorkflowContext] = None,
     ) -> WorkflowResult:
-        user_input = input_data.get("query") or input_data.get("text") or ""
+        user_input = input_data.get("query") or input_data.get("text") or input_data.get("message") or ""
         if not user_input:
-            return WorkflowResult(success=False, error="Missing 'query' or 'text'")
+            return WorkflowResult(success=False, error="Missing 'query', 'text', or 'message'")
 
         try:
             output = await orchestrate(user_input)
