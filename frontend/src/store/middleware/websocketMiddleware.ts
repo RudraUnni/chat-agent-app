@@ -9,6 +9,7 @@ import {
 } from '../slices/connectionSlice'
 import { handleIncomingMessage } from '../slices/chatSlice'
 import type { WsMessage } from '../../types/chat'
+import { API_ENDPOINTS } from '../../utils/constants'
 
 // Action types for WebSocket operations
 export const WEBSOCKET_CONNECT = 'websocket/connect'
@@ -16,9 +17,8 @@ export const WEBSOCKET_DISCONNECT = 'websocket/disconnect'
 export const WEBSOCKET_SEND = 'websocket/send'
 
 const RECONNECT_DELAY_BASE = 1000
-const WS_URL = 'ws://localhost:8000/ws/chat'
 
-export const websocketMiddleware: Middleware<{}, RootState> = (store) => {
+export const websocketMiddleware: Middleware<Record<string, never>, RootState> = (store) => {
   let reconnectTimeout: NodeJS.Timeout | null = null
 
   const clearReconnectTimeout = () => {
@@ -38,7 +38,7 @@ export const websocketMiddleware: Middleware<{}, RootState> = (store) => {
     }
 
     store.dispatch(setConnecting(true))
-    const ws = new WebSocket(WS_URL)
+    const ws = new WebSocket(API_ENDPOINTS.WS_URL)
 
     ws.onopen = () => {
       console.log('✅ WebSocket connected')
@@ -97,7 +97,7 @@ export const websocketMiddleware: Middleware<{}, RootState> = (store) => {
     }
   }
 
-  return (next) => (action: any) => {
+  return (next) => (action: { type: string; payload?: unknown }) => {
     // Handle WebSocket-specific actions
     switch (action.type) {
       case WEBSOCKET_CONNECT:
@@ -105,7 +105,7 @@ export const websocketMiddleware: Middleware<{}, RootState> = (store) => {
         connect()
         break
 
-      case WEBSOCKET_DISCONNECT:
+      case WEBSOCKET_DISCONNECT: {
         clearReconnectTimeout()
         const state = store.getState()
         if (state.connection.ws) {
@@ -114,8 +114,9 @@ export const websocketMiddleware: Middleware<{}, RootState> = (store) => {
           store.dispatch(setConnected(false))
         }
         break
+      }
 
-      case WEBSOCKET_SEND:
+      case WEBSOCKET_SEND: {
         const currentState = store.getState()
         if (currentState.connection.ws && currentState.connection.ws.readyState === WebSocket.OPEN) {
           currentState.connection.ws.send(JSON.stringify(action.payload))
@@ -124,6 +125,7 @@ export const websocketMiddleware: Middleware<{}, RootState> = (store) => {
           store.dispatch(setConnectionError('Cannot send message: Not connected'))
         }
         break
+      }
     }
 
     // Pass action to next middleware/reducer

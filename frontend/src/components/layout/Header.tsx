@@ -44,7 +44,7 @@ const Header = () => {
             </div>
             
             {/* Navigation */}
-            <nav className="flex space-x-1">
+            <nav className="flex space-x-1" role="navigation" aria-label="Main navigation">
               {navItems.map(({ path, label, icon: Icon }) => (
               <Link
                 key={path}
@@ -55,8 +55,9 @@ const Header = () => {
                     ? 'bg-primary-50 text-primary-700'
                     : 'text-gray-600 hover:text-gray-900 hover:bg-gray-50'
                 )}
+                aria-current={location.pathname === path ? 'page' : undefined}
               >
-                <Icon className="w-4 h-4" />
+                <Icon className="w-4 h-4" aria-hidden="true" />
                 <span>{label}</span>
               </Link>
             ))}
