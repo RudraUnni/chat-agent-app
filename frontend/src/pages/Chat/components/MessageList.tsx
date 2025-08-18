@@ -1,6 +1,7 @@
 import { useEffect, useRef } from 'react'
 import type { ChatMessage } from '../../../types/chat'
 import MessageItem from './MessageItem'
+import ErrorBoundary from '../../../components/common/ErrorBoundary'
 
 interface MessageListProps {
   messages: ChatMessage[]
@@ -49,15 +50,19 @@ const MessageList = ({ messages }: MessageListProps) => {
   }
 
   return (
-    <div 
-      ref={containerRef}
-      className="flex-1 overflow-y-auto p-4 space-y-4 scrollbar-hide"
-    >
-      {messages.map((message) => (
-        <MessageItem key={message.id} message={message} />
-      ))}
-      <div ref={messagesEndRef} />
-    </div>
+    <ErrorBoundary>
+      <div 
+        ref={containerRef}
+        className="flex-1 overflow-y-auto p-4 space-y-4 scrollbar-hide"
+        role="log"
+        aria-label="Chat messages"
+      >
+        {messages.map((message) => (
+          <MessageItem key={message.id} message={message} />
+        ))}
+        <div ref={messagesEndRef} />
+      </div>
+    </ErrorBoundary>
   )
 }
 

@@ -1,9 +1,11 @@
+import type { MessageStatus } from '../utils/constants'
+
 export interface ChatMessage {
   id: string
   content: string
   role: 'user' | 'assistant'
   timestamp: number
-  status?: 'sending' | 'sent' | 'delivered' | 'error'
+  status?: MessageStatus
 }
 
 export interface ChatSession {
@@ -21,10 +23,3 @@ export interface WsMessage {
   sessionId?: string
 }
 
-export interface ChatState {
-  currentSession: ChatSession | null
-  messages: ChatMessage[]
-  isConnected: boolean
-  isTyping: boolean
-  error: string | null
-}
