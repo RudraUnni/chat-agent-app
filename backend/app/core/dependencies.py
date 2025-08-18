@@ -1,9 +1,15 @@
 from typing import Optional
 from fastapi import Depends, HTTPException, status
-from app.core.config import settings
+from sqlalchemy.ext.asyncio import AsyncSession
+
+from app.core.config import get_settings
+from app.database.connection import get_db
 from app.services.llm.factory import LLMFactory
 from app.services.chat.manager import ChatManager
+from app.services.database.chat_service import DatabaseChatService
 from app.services.workflow.registry import WorkflowRegistry
+
+settings = get_settings()
 
 
 def get_llm_service():
@@ -17,8 +23,13 @@ def get_llm_service():
 
 
 def get_chat_manager():
-    """Dependency for chat manager"""
+    """Dependency for chat manager (legacy in-memory)"""
     return ChatManager()
+
+
+def get_database_chat_service(db: AsyncSession = Depends(get_db)) -> DatabaseChatService:
+    """Dependency for database-backed chat service"""
+    return DatabaseChatService(db)
 
 
 def get_workflow_registry():
