@@ -1,17 +1,41 @@
 # backend/app/main.py
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
+from contextlib import asynccontextmanager
+
 from app.api.v1.router import api_router
+from app.database.connection import init_db, close_db
+from app.core.config import get_settings
+
+settings = get_settings()
+
+
+@asynccontextmanager
+async def lifespan(app: FastAPI):
+    """Application lifespan manager for startup/shutdown events"""
+    # Startup
+    await init_db()
+    print("Database initialized")
+    
+    yield
+    
+    # Shutdown
+    await close_db()
+    print("Database connections closed")
 
 # Create FastAPI app
-app = FastAPI(title="Chat Agent API", version="1.0.0")
+app = FastAPI(
+    title=settings.app_name,
+    version="1.0.0",
+    lifespan=lifespan
+)
 
 # Add CORS middleware
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=["http://localhost:3000", "http://localhost:5173"],  # More specific origins
+    allow_origins=settings.cors_origins,
     allow_credentials=True,
-    allow_methods=["GET", "POST"],
+    allow_methods=["GET", "POST", "PUT", "DELETE"],
     allow_headers=["*"],
 )
 

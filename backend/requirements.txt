@@ -9,3 +9,12 @@ requests==2.31.0
 tenacity==8.2.3
 asyncio==3.4.3
 
+# Database dependencies
+sqlalchemy[asyncio]==2.0.23
+asyncpg==0.29.0
+alembic==1.13.1
+
+# Optional: Redis for caching/sessions
+redis[hiredis]==5.0.1
+aioredis==2.0.1
+
