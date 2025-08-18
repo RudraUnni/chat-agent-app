@@ -54,7 +54,18 @@ class Agent:
         def _tool(user_input: str) -> str:
             # Simple sync wrapper around invoke for tooling composition
             import asyncio
-            return asyncio.get_event_loop().run_until_complete(self.invoke(user_input))
+            try:
+                # Try to get the current event loop
+                loop = asyncio.get_running_loop()
+            except RuntimeError:
+                # No running loop, create a new one
+                return asyncio.run(self.invoke(user_input))
+            else:
+                # There is a running loop, we need to run in a thread
+                import concurrent.futures
+                with concurrent.futures.ThreadPoolExecutor() as executor:
+                    future = executor.submit(asyncio.run, self.invoke(user_input))
+                    return future.result()
         _tool.__name__ = name  # type: ignore[attr-defined]
         _tool.__doc__ = description
         return _tool

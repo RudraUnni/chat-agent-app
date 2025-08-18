@@ -4,6 +4,7 @@ from pydantic import BaseModel
 from app.core.dependencies import get_workflow_registry, get_chat_manager
 from app.services.workflow.registry import WorkflowRegistry
 from app.services.chat.manager import ChatManager
+from app.core.workflow_utils import extract_workflow_response, format_workflow_error
 
 
 router = APIRouter(prefix="/chat", tags=["chat"])
@@ -53,14 +54,7 @@ async def chat(
     result = await workflow.execute(input_data, session.context)
     
     if result.success:
-        response_text = None
-        if result.data:
-            # Extract response based on workflow type
-            if request.workflow == "general_assistant":
-                response_text = result.data.get('response')
-            elif request.workflow == "pubmed_research":
-                response_text = result.data.get('formatted_summary') or result.data.get('analysis')
-        
+        response_text = extract_workflow_response(result, request.workflow)
         return ChatResponse(
             success=True,
             response=response_text,
@@ -68,9 +62,10 @@ async def chat(
             session_id=session.session_id
         )
     else:
+        error_message = format_workflow_error(result, request.workflow)
         return ChatResponse(
             success=False,
-            error=result.error,
+            error=error_message,
             session_id=session.session_id
         )
 

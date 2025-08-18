@@ -20,6 +20,11 @@ class Settings(BaseSettings):
     database_user: str = "chatapp"
     database_password: str = "chatapp_password"
     
+    # LLM Configuration
+    openai_api_key: Optional[str] = None
+    default_llm_model: str = "gpt-4o-mini"
+    default_llm_provider: str = "openai"
+    
     class Config:
         env_file = ".env"
         case_sensitive = False
