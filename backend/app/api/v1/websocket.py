@@ -6,7 +6,10 @@ from typing import Optional
 from app.services.workflow.registry import WorkflowRegistry
 from app.services.chat.manager import ChatManager
 from app.services.llm.factory import LLMFactory
-from app.core.config import settings
+from app.core.config import get_settings
+from app.core.workflow_utils import extract_workflow_response, format_workflow_error
+
+settings = get_settings()
 
 router = APIRouter()
 
@@ -33,14 +36,6 @@ class ConnectionManager:
 
 manager = ConnectionManager()
 
-def get_dependencies():
-    """Get required dependencies"""
-    from app.core.dependencies import get_workflow_registry, get_chat_manager
-    return {
-        'workflow_registry': get_workflow_registry(),
-        'chat_manager': get_chat_manager()
-    }
-
 @router.websocket("/chat")
 async def websocket_chat_endpoint(
     websocket: WebSocket,
@@ -48,10 +43,10 @@ async def websocket_chat_endpoint(
 ):
     """WebSocket endpoint for real-time chat with workflows"""
     
-    # Get dependencies
-    deps = get_dependencies()
-    workflow_registry = deps['workflow_registry']
-    chat_manager = deps['chat_manager']
+    # Get dependencies using the same pattern as REST endpoints
+    from app.core.dependencies import get_workflow_registry, get_chat_manager
+    workflow_registry = get_workflow_registry()
+    chat_manager = get_chat_manager()
     
     # Generate session_id if not provided
     if not session_id:
@@ -107,16 +102,7 @@ async def websocket_chat_endpoint(
                     result = await workflow.execute(input_data, session.context)
                     
                     if result.success:
-                        # Extract response
-                        response_text = ""
-                        if result.data:
-                            if workflow_name == "general_assistant":
-                                response_text = result.data.get('response', '')
-                            elif workflow_name == "pubmed_research":
-                                response_text = result.data.get('formatted_summary') or \
-                                              result.data.get('analysis') or \
-                                              json.dumps(result.data)
-                        
+                        response_text = extract_workflow_response(result, workflow_name)
                         response = {
                             "type": "assistant",
                             "content": response_text,
@@ -124,9 +110,10 @@ async def websocket_chat_endpoint(
                             "timestamp": datetime.now().isoformat()
                         }
                     else:
+                        error_message = format_workflow_error(result, workflow_name)
                         response = {
                             "type": "error",
-                            "content": result.error or "Workflow execution failed",
+                            "content": error_message,
                             "timestamp": datetime.now().isoformat()
                         }
                     
