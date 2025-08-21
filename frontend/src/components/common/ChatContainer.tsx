@@ -22,15 +22,10 @@ const ChatContainer = () => {
   const connectionError = useConnectionError()
   const messagesEndRef = useRef<HTMLDivElement>(null)
 
-  const handleSendMessage = async (content: string) => {
+  const handleSendMessage = (content: string) => {
     if (!content.trim() || !isConnected) return
 
-    try {
-      dispatch(sendChatMessage(content))
-    } catch (error) {
-      console.error('Failed to send message:', error)
-      dispatch(setConnectionError('Failed to send message. Please try again.'))
-    }
+    dispatch(sendChatMessage(content) as any)
   }
 
   const clearError = () => {

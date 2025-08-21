@@ -75,8 +75,9 @@ const MessageBubble = ({ message }: MessageBubbleProps) => {
                       {children}
                     </blockquote>
                   ),
-                  code: ({inline, children}) => (
-                    inline ? (
+                  code: ({children, className}) => {
+                    const isInline = className?.includes('inline');
+                    return isInline ? (
                       <code className="bg-gray-200 px-1 py-0.5 rounded text-sm font-mono text-gray-800">
                         {children}
                       </code>
@@ -84,8 +85,8 @@ const MessageBubble = ({ message }: MessageBubbleProps) => {
                       <code className="block bg-gray-800 text-gray-100 p-3 rounded-lg text-sm font-mono overflow-x-auto mb-2">
                         {children}
                       </code>
-                    )
-                  ),
+                    );
+                  },
                   pre: ({children}) => (
                     <pre className="bg-gray-800 text-gray-100 p-3 rounded-lg text-sm font-mono overflow-x-auto mb-2">
                       {children}
