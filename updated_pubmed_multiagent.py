@@ -13,7 +13,7 @@ from agents import Agent, Runner, function_tool
 logging.basicConfig(level=logging.WARNING, format='%(asctime)s - %(levelname)s - %(message)s')
 log = logging.getLogger(__name__)
 
-os.environ["OPENAI_API_KEY"] = "123"
+os.environ["OPENAI_API_KEY"] = os.getenv("OPENAI_API_KEY", "")
 
 
 class ResearchMemory:
