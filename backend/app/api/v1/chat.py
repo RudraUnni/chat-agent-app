@@ -12,7 +12,7 @@ router = APIRouter(prefix="/chat", tags=["chat"])
 
 class ChatRequest(BaseModel):
     message: str
-    workflow: str = "general_assistant"
+    workflow: str = "pubmed_research"  # Default to Medical Assistant
     session_id: Optional[str] = None
     parameters: Optional[Dict[str, Any]] = {}
 

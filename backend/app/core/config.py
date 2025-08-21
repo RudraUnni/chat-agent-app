@@ -10,7 +10,7 @@ class Settings(BaseSettings):
     """Application settings"""
     
     # Application
-    app_name: str = "Chat Agent API"
+    app_name: str = "Medical Assistant API"
     app_version: str = "1.0.0"
     debug: bool = False
     api_prefix: str = "/api/v1"
