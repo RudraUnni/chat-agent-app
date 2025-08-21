@@ -77,7 +77,7 @@ async def websocket_chat_endpoint(
             try:
                 message_data = json.loads(data)
                 user_message = message_data.get("content", "")
-                workflow_name = message_data.get("workflow", "general_assistant")
+                workflow_name = message_data.get("workflow", "pubmed_research")  # Default to Medical Assistant
                 parameters = message_data.get("parameters", {})
                 
                 if user_message.strip():

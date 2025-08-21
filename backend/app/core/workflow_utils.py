@@ -23,9 +23,7 @@ def extract_workflow_response(result: WorkflowResult, workflow_name: str) -> str
     # Try workflow-specific response extraction first
     response_text = ""
     
-    if workflow_name == "general_assistant":
-        response_text = result.data.get('response', '')
-    elif workflow_name == "pubmed_research":
+    if workflow_name == "pubmed_research":
         response_text = (
             result.data.get('formatted_summary') or 
             result.data.get('analysis') or 

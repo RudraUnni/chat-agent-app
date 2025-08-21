@@ -10,8 +10,8 @@ const Home = () => {
   const features = [
     {
       icon: <Sparkles className="w-6 h-6" />,
-      title: "AI-Powered",
-      description: "Advanced language model for natural conversations"
+      title: "Medical Research",
+      description: "Access to PubMed database for evidence-based medical information"
     },
     {
       icon: <Zap className="w-6 h-6" />,
@@ -20,8 +20,8 @@ const Home = () => {
     },
     {
       icon: <Shield className="w-6 h-6" />,
-      title: "Persistent",
-      description: "Your conversation continues across page navigation"
+      title: "Reliable",
+      description: "Evidence-based medical information from trusted sources"
     }
   ]
 
@@ -34,11 +34,11 @@ const Home = () => {
         </div>
         
         <h1 className="text-4xl font-bold text-gray-900 mb-4">
-          Welcome to Chat Agent
+          Welcome to Medical Assistant
         </h1>
         
         <p className="text-xl text-gray-600 mb-8">
-          Your intelligent AI assistant for seamless conversations
+          Your intelligent medical research assistant powered by PubMed
         </p>
 
         {/* Connection Status & Message Count */}

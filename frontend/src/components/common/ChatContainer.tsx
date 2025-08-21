@@ -65,11 +65,11 @@ const ChatContainer = () => {
           </svg>
         </div>
         <h3 className="text-2xl font-semibold text-gray-900 mb-3">
-          Welcome to your AI Assistant
+          Welcome to your Medical Assistant
         </h3>
         <p className="text-gray-600 leading-relaxed">
-          Start a conversation by typing a message below. I can help you with questions, 
-          provide explanations, assist with coding, and much more.
+          Start a conversation by typing a medical question below. I can help you research 
+          medical topics, find relevant studies, and provide evidence-based information from PubMed.
         </p>
       </div>
     </div>
@@ -79,7 +79,7 @@ const ChatContainer = () => {
     <div className="flex flex-col h-screen max-w-4xl mx-auto bg-white">
       {/* Header */}
       <div className="flex items-center justify-between p-4 border-b bg-white shadow-sm">
-        <h1 className="text-xl font-semibold text-gray-900">AI Assistant</h1>
+        <h1 className="text-xl font-semibold text-gray-900">Medical Assistant</h1>
         <div className="flex items-center space-x-2">
           {isConnected ? (
             <div className="flex items-center text-green-600">
