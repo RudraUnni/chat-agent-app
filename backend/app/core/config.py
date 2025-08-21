@@ -11,7 +11,16 @@ class Settings(BaseSettings):
     
     # Application
     app_name: str = "Chat Agent API"
+    app_version: str = "1.0.0"
     debug: bool = False
+    api_prefix: str = "/api/v1"
+    
+    # CORS
+    cors_origins: str = '["http://localhost:3000", "http://localhost:5173"]'
+    
+    # Rate limiting
+    rate_limit_requests: int = 100
+    rate_limit_window: int = 3600
     
     # Database
     database_host: str = "localhost"
@@ -24,6 +33,10 @@ class Settings(BaseSettings):
     openai_api_key: Optional[str] = None
     default_llm_model: str = "gpt-4o-mini"
     default_llm_provider: str = "openai"
+    
+    # PubMed Configuration
+    pubmed_max_results: int = 5
+    pubmed_timeout: int = 15
     
     class Config:
         env_file = ".env"
