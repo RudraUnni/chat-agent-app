@@ -82,7 +82,7 @@ const MessageInput = ({ onSendMessage, disabled = false, placeholder = "Type you
         <div className="flex justify-between items-center mt-2">
           {!disabled && (
             <p className="text-xs text-gray-500">
-              Press Enter to send, Shift+Enter for new line
+              Press Enter to send.
             </p>
           )}
           <p className="text-xs text-gray-400">
