@@ -1,5 +1,5 @@
 from typing import Any, Dict, Optional
-from workflows.base import BaseWorkflow, WorkflowContext, WorkflowResult
+from ..base import BaseWorkflow, WorkflowContext, WorkflowResult
 from .agents import orchestrate
 
 

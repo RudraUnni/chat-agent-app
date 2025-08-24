@@ -1,6 +1,13 @@
 from typing import Dict, Optional, List
 from datetime import datetime
 import uuid
+import sys
+import os
+# Add backend root to path to access workflows
+backend_root = os.path.dirname(os.path.dirname(os.path.dirname(os.path.dirname(os.path.abspath(__file__)))))
+if backend_root not in sys.path:
+    sys.path.insert(0, backend_root)
+
 from workflows.base import WorkflowContext
 
 

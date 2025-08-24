@@ -1,14 +1,5 @@
 import re
 from typing import Any, Awaitable, Callable, Dict, Optional
-import os
-import sys
-
-# Add app directory to path for imports
-current_dir = os.path.dirname(os.path.abspath(__file__))
-backend_dir = os.path.dirname(os.path.dirname(current_dir))
-app_dir = os.path.join(backend_dir, 'app')
-if app_dir not in sys.path:
-    sys.path.insert(0, app_dir)
 
 
 class RunnerResult:
