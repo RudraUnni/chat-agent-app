@@ -3,14 +3,8 @@ Utilities for standardizing workflow response handling.
 """
 
 from typing import Dict, Any, Optional
-import sys
-import os
-# Add backend root to path to access workflows
-backend_root = os.path.dirname(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
-if backend_root not in sys.path:
-    sys.path.insert(0, backend_root)
 
-from workflows.base import WorkflowResult
+from app.workflows.base import WorkflowResult
 
 
 def extract_workflow_response(result: WorkflowResult, workflow_name: str) -> str:
