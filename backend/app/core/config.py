@@ -4,6 +4,8 @@ Simple application configuration.
 
 from pydantic_settings import BaseSettings
 from typing import Optional
+from pydantic import field_validator
+import os
 
 
 class Settings(BaseSettings):
@@ -38,8 +40,18 @@ class Settings(BaseSettings):
     pubmed_max_results: int = 5
     pubmed_timeout: int = 15
     
+    @field_validator('pubmed_timeout', mode='before')
+    @classmethod
+    def parse_pubmed_timeout(cls, v):
+        """Parse pubmed_timeout, handling common formatting issues"""
+        if isinstance(v, str):
+            # Remove trailing dots and convert to int
+            v = v.rstrip('.')
+            return int(float(v))
+        return v
+    
     class Config:
-        env_file = ".env"
+        env_file = [".env", "../.env", "../../.env"]
         case_sensitive = False
         
     @property
