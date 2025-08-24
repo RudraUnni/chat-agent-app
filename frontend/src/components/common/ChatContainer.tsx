@@ -25,7 +25,7 @@ const ChatContainer = () => {
   const handleSendMessage = (content: string) => {
     if (!content.trim() || !isConnected) return
 
-    dispatch(sendChatMessage(content) as any)
+    dispatch(sendChatMessage(content))
   }
 
   const clearError = () => {
