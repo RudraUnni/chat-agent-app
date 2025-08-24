@@ -39,14 +39,7 @@ def get_database_chat_service(db: AsyncSession = Depends(get_db)) -> DatabaseCha
 def get_workflow_registry():
     """Dependency for workflow registry"""
     try:
-        import sys
-        import os
-        # Add backend root to path to access workflows
-        backend_root = os.path.dirname(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
-        if backend_root not in sys.path:
-            sys.path.insert(0, backend_root)
-        
-        from workflows import register_all_workflows
+        from app.workflows import register_all_workflows
         registry = WorkflowRegistry()
         register_all_workflows(registry)
         return registry
