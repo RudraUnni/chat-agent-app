@@ -102,7 +102,7 @@ const ChatInput = ({
       <div className="flex justify-between items-center mt-2 max-w-4xl mx-auto px-1">
         {!disabled && (
           <p className="text-xs text-gray-500">
-            Press Enter to send, Shift+Enter for new line
+            Press Enter to send.
           </p>
         )}
         <p className="text-xs text-gray-400">
