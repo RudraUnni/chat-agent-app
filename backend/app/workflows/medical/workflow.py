@@ -17,12 +17,19 @@ class PubMedResearchWorkflow(BaseWorkflow):
         input_data: Dict[str, Any],
         context: Optional[WorkflowContext] = None,
     ) -> WorkflowResult:
+        print(f"PubMedResearchWorkflow.execute called with input_data: {input_data}")
         user_input = input_data.get("query") or input_data.get("text") or input_data.get("message") or ""
+        print(f"Extracted user_input: '{user_input}'")
         if not user_input:
             return WorkflowResult(success=False, error="Missing 'query', 'text', or 'message'")
 
         try:
+            print(f"Calling orchestrate with: '{user_input}'")
             output = await orchestrate(user_input)
+            print(f"Orchestrate returned: {output}")
             return WorkflowResult(success=True, data={"output": output})
         except Exception as exc:
+            print(f"Error in workflow execution: {exc}")
+            import traceback
+            traceback.print_exc()
             return WorkflowResult(success=False, error=str(exc))

@@ -42,6 +42,7 @@ async def websocket_chat_endpoint(
     session_id: Optional[str] = None
 ):
     """WebSocket endpoint for real-time chat with workflows"""
+    print(f"WebSocket connection attempt received - session_id: {session_id}")
     
     # Get dependencies using the same pattern as REST endpoints
     from app.core.dependencies import get_workflow_registry, get_chat_manager
@@ -73,6 +74,7 @@ async def websocket_chat_endpoint(
         while True:
             # Receive message from client
             data = await websocket.receive_text()
+            print(f"Received WebSocket message: {data}")
             
             try:
                 message_data = json.loads(data)
@@ -81,6 +83,7 @@ async def websocket_chat_endpoint(
                 parameters = message_data.get("parameters", {})
                 
                 if user_message.strip():
+                    print(f"Processing message: '{user_message}' with workflow: '{workflow_name}'")
                     # Get workflow
                     workflow = workflow_registry.get_workflow(workflow_name)
                     
@@ -98,8 +101,16 @@ async def websocket_chat_endpoint(
                         'message': user_message,
                         **parameters
                     }
+                    print(f"Executing workflow with input_data: {input_data}")
                     
-                    result = await workflow.execute(input_data, session.context)
+                    try:
+                        result = await workflow.execute(input_data, session.context)
+                        print(f"Workflow result - Success: {result.success}, Data: {result.data if result.success else result.error}")
+                    except Exception as e:
+                        print(f"Workflow execution error: {e}")
+                        import traceback
+                        traceback.print_exc()
+                        raise
                     
                     if result.success:
                         response_text = extract_workflow_response(result, workflow_name)

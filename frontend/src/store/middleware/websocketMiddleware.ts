@@ -120,6 +120,7 @@ export const websocketMiddleware: Middleware<Record<string, never>, RootState> =
       case WEBSOCKET_SEND: {
         const currentState = store.getState()
         if (currentState.connection.ws && currentState.connection.ws.readyState === WebSocket.OPEN) {
+          console.log('Sending WebSocket message:', action.payload)
           currentState.connection.ws.send(JSON.stringify(action.payload))
         } else {
           console.error('WebSocket not connected')

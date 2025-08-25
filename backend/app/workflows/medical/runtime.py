@@ -60,20 +60,28 @@ class Agent:
             return str(user_input)
 
     def as_tool(self, name: str, description: str) -> Callable[[str], str]:
-        def _tool(user_input: str) -> str:
+        def _tool(user_input: str = None, **kwargs) -> str:
             # Simple sync wrapper around invoke for tooling composition
+            # Accept both positional user_input and keyword arguments
+            if user_input is None and 'query' in kwargs:
+                user_input = kwargs['query']
+            elif user_input is None and 'pmid' in kwargs:
+                user_input = kwargs['pmid']
+            elif user_input is None:
+                user_input = str(kwargs) if kwargs else ""
+            
             import asyncio
             try:
                 # Try to get the current event loop
                 loop = asyncio.get_running_loop()
             except RuntimeError:
                 # No running loop, create a new one
-                return asyncio.run(self.invoke(user_input))
+                return asyncio.run(self.invoke(user_input, **kwargs))
             else:
                 # There is a running loop, we need to run in a thread
                 import concurrent.futures
                 with concurrent.futures.ThreadPoolExecutor() as executor:
-                    future = executor.submit(asyncio.run, self.invoke(user_input))
+                    future = executor.submit(asyncio.run, self.invoke(user_input, **kwargs))
                     return future.result()
         _tool.__name__ = name  # type: ignore[attr-defined]
         _tool.__doc__ = description
