@@ -1,6 +1,7 @@
 from fastapi import APIRouter, WebSocket, WebSocketDisconnect, Depends
 import json
 import uuid
+import logging
 from datetime import datetime
 from typing import Optional
 from app.services.workflow.registry import WorkflowRegistry
@@ -10,6 +11,7 @@ from app.core.config import get_settings
 from app.core.workflow_utils import extract_workflow_response, format_workflow_error
 
 settings = get_settings()
+logger = logging.getLogger(__name__)
 
 router = APIRouter()
 
@@ -42,7 +44,6 @@ async def websocket_chat_endpoint(
     session_id: Optional[str] = None
 ):
     """WebSocket endpoint for real-time chat with workflows"""
-    print(f"WebSocket connection attempt received - session_id: {session_id}")
     
     # Get dependencies using the same pattern as REST endpoints
     from app.core.dependencies import get_workflow_registry, get_chat_manager
@@ -57,6 +58,7 @@ async def websocket_chat_endpoint(
     session = chat_manager.get_or_create_session(session_id)
     
     await manager.connect(session_id, websocket)
+    logger.info(f"WebSocket connected: session_id={session_id}")
     
     try:
         # Send welcome message
@@ -74,7 +76,7 @@ async def websocket_chat_endpoint(
         while True:
             # Receive message from client
             data = await websocket.receive_text()
-            print(f"Received WebSocket message: {data}")
+            logger.debug(f"Received message: session_id={session_id}, data={data[:100]}...")
             
             try:
                 message_data = json.loads(data)
@@ -83,7 +85,7 @@ async def websocket_chat_endpoint(
                 parameters = message_data.get("parameters", {})
                 
                 if user_message.strip():
-                    print(f"Processing message: '{user_message}' with workflow: '{workflow_name}'")
+                    logger.info(f"Processing: workflow={workflow_name}, message_length={len(user_message)}")
                     # Get workflow
                     workflow = workflow_registry.get_workflow(workflow_name)
                     
@@ -101,16 +103,9 @@ async def websocket_chat_endpoint(
                         'message': user_message,
                         **parameters
                     }
-                    print(f"Executing workflow with input_data: {input_data}")
                     
-                    try:
-                        result = await workflow.execute(input_data, session.context)
-                        print(f"Workflow result - Success: {result.success}, Data: {result.data if result.success else result.error}")
-                    except Exception as e:
-                        print(f"Workflow execution error: {e}")
-                        import traceback
-                        traceback.print_exc()
-                        raise
+                    result = await workflow.execute(input_data, session.context)
+                    logger.debug(f"Workflow result: success={result.success}")
                     
                     if result.success:
                         response_text = extract_workflow_response(result, workflow_name)
@@ -139,8 +134,8 @@ async def websocket_chat_endpoint(
                 await manager.send_message(session_id, error_response)
     
     except WebSocketDisconnect:
+        logger.info(f"WebSocket disconnected: session_id={session_id}")
         manager.disconnect(session_id)
     except Exception as e:
+        manager.error(f"WebSocket error: session_id={session_id}, error={e}")
         manager.disconnect(session_id)
-        if "no close frame received" not in str(e).lower():
-            print(f"Connection error: {e}")

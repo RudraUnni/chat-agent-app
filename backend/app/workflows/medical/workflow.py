@@ -1,6 +1,9 @@
+import logging
 from typing import Any, Dict, Optional
 from app.workflows.base import BaseWorkflow, WorkflowContext, WorkflowResult
 from .agents import orchestrate
+
+logger = logging.getLogger(__name__)
 
 
 class PubMedResearchWorkflow(BaseWorkflow):
@@ -17,19 +20,15 @@ class PubMedResearchWorkflow(BaseWorkflow):
         input_data: Dict[str, Any],
         context: Optional[WorkflowContext] = None,
     ) -> WorkflowResult:
-        print(f"PubMedResearchWorkflow.execute called with input_data: {input_data}")
         user_input = input_data.get("query") or input_data.get("text") or input_data.get("message") or ""
-        print(f"Extracted user_input: '{user_input}'")
         if not user_input:
             return WorkflowResult(success=False, error="Missing 'query', 'text', or 'message'")
 
         try:
-            print(f"Calling orchestrate with: '{user_input}'")
+            logger.debug(f"Orchestrating input: {user_input[:100]}...")
             output = await orchestrate(user_input)
-            print(f"Orchestrate returned: {output}")
+            logger.debug(f"Orchestration complete, output length: {len(output)}")
             return WorkflowResult(success=True, data={"output": output})
         except Exception as exc:
-            print(f"Error in workflow execution: {exc}")
-            import traceback
-            traceback.print_exc()
+            logger.error(f"Workflow execution failed: {exc}", exc_info=True)
             return WorkflowResult(success=False, error=str(exc))
