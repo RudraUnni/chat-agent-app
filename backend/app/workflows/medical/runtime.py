@@ -1,108 +1,66 @@
-import re
-from typing import Any, Awaitable, Callable, Dict, Optional
+# Compatibility shim for OpenAI Agents SDK
 import os
-import sys
+from agents import Agent as OpenAIAgent, Runner as OpenAIRunner, function_tool
 
-# Add app directory to path for imports
-current_dir = os.path.dirname(os.path.abspath(__file__))
-backend_dir = os.path.dirname(os.path.dirname(current_dir))
-app_dir = os.path.join(backend_dir, 'app')
-if app_dir not in sys.path:
-    sys.path.insert(0, app_dir)
+# Ensure OpenAI API key is available for the SDK
+def _ensure_api_key():
+    """Ensure OpenAI API key is set in environment"""
+    if not os.getenv("OPENAI_API_KEY"):
+        # Try to load from config
+        try:
+            from app.core.config import get_settings
+            settings = get_settings()
+            if settings.openai_api_key:
+                os.environ["OPENAI_API_KEY"] = settings.openai_api_key
+        except Exception:
+            pass
+
+# Set API key on module import
+_ensure_api_key()
+
+
+class Agent(OpenAIAgent):
+    """Wrapper to maintain backward compatibility while using OpenAI Agents SDK"""
+    
+    def __init__(self, *args, **kwargs):
+        """Initialize agent and ensure API key is set"""
+        _ensure_api_key()
+        super().__init__(*args, **kwargs)
+    
+    async def invoke(self, user_input: str, **kwargs) -> str:
+        """Async wrapper for OpenAI Agent execution"""
+        result = await OpenAIRunner.run(self, user_input)
+        return result.final_output
+    
+    def as_tool(self, name: str, description: str):
+        """Convert agent to a tool for use by other agents"""
+        agent_ref = self
+        
+        @function_tool
+        def tool_func(query: str) -> str:
+            """Tool wrapper for agent execution"""
+            import asyncio
+            try:
+                loop = asyncio.get_running_loop()
+            except RuntimeError:
+                return asyncio.run(agent_ref.invoke(query))
+            else:
+                import concurrent.futures
+                with concurrent.futures.ThreadPoolExecutor() as executor:
+                    future = executor.submit(asyncio.run, agent_ref.invoke(query))
+                    return future.result()
+        
+        tool_func.__name__ = name
+        tool_func.__doc__ = description
+        return tool_func
+
+
+class Runner(OpenAIRunner):
+    """Compatibility wrapper for OpenAI Runner"""
+    pass
 
 
 class RunnerResult:
+    """Compatibility class for result handling"""
     def __init__(self, final_output: str):
         self.final_output = final_output
-
-
-def function_tool(func: Callable[..., str]) -> Callable[..., str]:
-    func._is_tool = True  # type: ignore[attr-defined]
-    return func
-
-
-class Agent:
-    def __init__(
-        self,
-        name: str,
-        instructions: str,
-        tools: Optional[list] = None,
-        model: Optional[str] = None,
-    ) -> None:
-        self.name = name
-        self.instructions = instructions
-        self.tools = tools or []
-        self.model = model
-
-    async def invoke(self, user_input: str, **kwargs: Any) -> str:
-        # Default behavior: if a single tool is provided, try to call it with the raw input
-        if not self.tools:
-            return user_input
-
-        # Heuristic routing for two known tools: search_pubmed(query) and get_paper(pmid)
-        tool_names = {getattr(t, "__name__", str(i)): t for i, t in enumerate(self.tools)}
-
-        if "get_paper" in tool_names:
-            pmid = _extract_pmid(user_input) or kwargs.get("pmid")
-            if pmid:
-                return tool_names["get_paper"](pmid=str(pmid))
-
-        if "search_pubmed" in tool_names:
-            query = (user_input or "").strip()
-            if query:
-                return tool_names["search_pubmed"](query=query)
-
-        # Fallback: call the first tool with raw input as query
-        tool = self.tools[0]
-        try:
-            return tool(user_input)  # type: ignore[misc]
-        except Exception:
-            return str(user_input)
-
-    def as_tool(self, name: str, description: str) -> Callable[[str], str]:
-        def _tool(user_input: str = None, **kwargs) -> str:
-            # Simple sync wrapper around invoke for tooling composition
-            # Accept both positional user_input and keyword arguments
-            if user_input is None and 'query' in kwargs:
-                user_input = kwargs['query']
-            elif user_input is None and 'pmid' in kwargs:
-                user_input = kwargs['pmid']
-            elif user_input is None:
-                user_input = str(kwargs) if kwargs else ""
-            
-            import asyncio
-            try:
-                # Try to get the current event loop
-                loop = asyncio.get_running_loop()
-            except RuntimeError:
-                # No running loop, create a new one
-                return asyncio.run(self.invoke(user_input, **kwargs))
-            else:
-                # There is a running loop, we need to run in a thread
-                import concurrent.futures
-                with concurrent.futures.ThreadPoolExecutor() as executor:
-                    future = executor.submit(asyncio.run, self.invoke(user_input, **kwargs))
-                    return future.result()
-        _tool.__name__ = name  # type: ignore[attr-defined]
-        _tool.__doc__ = description
-        return _tool
-
-
-class Runner:
-    @staticmethod
-    async def run(agent: Agent, user_input: str) -> RunnerResult:
-        output = await agent.invoke(user_input)
-        return RunnerResult(final_output=output)
-
-
-def _extract_pmid(text: Optional[str]) -> Optional[str]:
-    if not text:
-        return None
-    # Match patterns like: PMID 12345678 or pmid:12345678 or just digits of length 7-9
-    m = re.search(r"(?i)pmid[:\s]*([0-9]{4,12})", text)
-    if m:
-        return m.group(1)
-    m = re.search(r"\b([0-9]{7,12})\b", text)
-    if m:
-        return m.group(1)
-    return None
