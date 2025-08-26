@@ -68,43 +68,35 @@ async def websocket_chat_endpoint(
     conversation_id = None
     default_user_id = uuid.UUID('00000000-0000-0000-0000-000000000001')
     
-    async def setup_conversation():
-        """Setup database conversation with manual session management"""
-        nonlocal conversation_id
-        try:
-            async with AsyncSessionLocal() as db:
-                db_chat_service = DatabaseChatService(db)
-                
-                # Try to create default user if it doesn't exist
-                try:
-                    existing_user = await db_chat_service.get_user(default_user_id)
-                    if not existing_user:
-                        await db_chat_service.create_user(
-                            username="default_user",
-                            email="default@example.com",
-                            user_id=default_user_id
-                        )
-                except Exception:
-                    # User probably already exists, continue
-                    pass
-                
-                # Create a new conversation for this session
-                conversation = await db_chat_service.create_conversation(
-                    user_id=default_user_id, 
-                    title=f"Chat Session {session_id[:8]}"
+    # Setup conversation AFTER WebSocket is connected - with minimal error handling
+    try:
+        # Simple database setup - if any part fails, gracefully disable database features
+        async with AsyncSessionLocal() as db:
+            db_chat_service = DatabaseChatService(db)
+            
+            # Try to create default user (ignore if exists)
+            try:
+                await db_chat_service.create_user(
+                    username="default_user",
+                    email="default@example.com",
+                    user_id=default_user_id
                 )
-                
-                await db.commit()
-                conversation_id = conversation.id
-                logger.info(f"Created conversation {conversation_id} for session {session_id}")
-                
-        except Exception as e:
-            logger.error(f"Failed to setup conversation: {e}")
-            # Continue without database - fallback to in-memory only
-            conversation_id = None
-    
-    # Setup conversation AFTER WebSocket is connected
-    await setup_conversation()
+            except Exception:
+                pass  # User exists or creation failed - continue
+            
+            # Create conversation
+            conversation = await db_chat_service.create_conversation(
+                user_id=default_user_id, 
+                title=f"Chat Session {session_id[:8]}"
+            )
+            
+            await db.commit()
+            conversation_id = conversation.id
+            logger.info(f"Database enabled: conversation {conversation_id}")
+            
+    except Exception as e:
+        logger.warning(f"Database unavailable, using in-memory mode: {e}")
+        conversation_id = None
     
     try:
         # Send welcome message
@@ -250,5 +242,5 @@ async def websocket_chat_endpoint(
         logger.info(f"WebSocket disconnected: session_id={session_id}")
         manager.disconnect(session_id)
     except Exception as e:
-        manager.error(f"WebSocket error: session_id={session_id}, error={e}")
+        logger.error(f"WebSocket error: session_id={session_id}, error={e}")
         manager.disconnect(session_id)
