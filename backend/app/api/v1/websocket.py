@@ -142,24 +142,32 @@ async def websocket_chat_with_conversation(
     workflow_registry = get_workflow_registry()
     chat_manager = get_chat_manager()
     
-    # Setup session and database - with error handling to not break connection
+    # Setup session and database - MUST succeed for persistence to work
     session = None
     try:
         # Get or create session with user_id and conversation_id
         session = chat_manager.get_or_create_session(session_id, user_id)
         session.conversation_id = conversation_id  # Override conversation_id
-        logger.info(f"Session created/retrieved: session_id={session_id}, user_id={user_id}")
+        logger.info(f"Session created/retrieved: session_id={session_id}, user_id={user_id}, conversation_id={conversation_id}")
         
-        # Ensure database conversation exists
+        # Ensure database conversation exists - this MUST succeed
+        if not user_id:
+            raise ValueError("user_id is required for conversation persistence")
+            
         await chat_manager.ensure_conversation_exists(session)
         logger.info(f"Database conversation ensured: conversation_id={session.conversation_id}")
         
     except Exception as e:
         logger.error(f"Failed to setup session/database for {session_id}: {e}")
-        # Continue anyway - we can still chat without persistence
-        if not session:
-            session = chat_manager.get_or_create_session(session_id, user_id)
-            session.conversation_id = conversation_id
+        # Send error message to client and close connection
+        error_msg = {
+            "type": "error",
+            "content": f"Failed to initialize conversation: {str(e)}",
+            "timestamp": datetime.now().isoformat()
+        }
+        await websocket.send_text(json.dumps(error_msg))
+        await websocket.close(code=1011, reason="Database setup failed")
+        return
     
     # Register connection after accept
     manager.active_connections[session_id] = websocket

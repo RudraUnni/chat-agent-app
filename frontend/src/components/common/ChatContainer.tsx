@@ -59,31 +59,47 @@ const ChatContainer = () => {
         try {
           // Try to load user from storage first
           dispatch(loadUserFromStorage())
-          
-          // If no user in storage, create a default test user
-          if (!currentUser) {
-            console.log('Creating default test user...')
-            await dispatch(createDummyUser()).unwrap()
-          }
-          
-          // Load conversation from storage
-          dispatch(loadConversationFromStorage())
-          
-          // Connect WebSocket
-          setTimeout(() => {
-            dispatch(connectWebSocket())
-          }, 100)
-          
           setIsInitialized(true)
         } catch (error) {
-          console.error('Failed to initialize app:', error)
-          setIsInitialized(true) // Still mark as initialized to avoid infinite loop
+          console.error('Failed to load user from storage:', error)
+          setIsInitialized(true)
         }
       }
     }
 
     initializeApp()
-  }, [dispatch, currentUser, isInitialized])
+  }, [dispatch, isInitialized])
+
+  // Create user if none exists
+  useEffect(() => {
+    const createUserIfNeeded = async () => {
+      if (isInitialized && !currentUser) {
+        try {
+          console.log('No user found, creating default test user...')
+          await dispatch(createDummyUser()).unwrap()
+        } catch (error) {
+          console.error('Failed to create dummy user:', error)
+        }
+      }
+    }
+
+    createUserIfNeeded()
+  }, [dispatch, isInitialized, currentUser])
+
+  // Separate effect to handle WebSocket connection after user is ready
+  useEffect(() => {
+    if (isInitialized && currentUser) {
+      console.log('User ready, loading conversation and connecting WebSocket...')
+      
+      // Load conversation from storage
+      dispatch(loadConversationFromStorage())
+      
+      // Connect WebSocket with user context
+      setTimeout(() => {
+        dispatch(connectWebSocket())
+      }, 100)
+    }
+  }, [dispatch, isInitialized, currentUser])
 
   // Load conversation history when conversation changes
   useEffect(() => {
