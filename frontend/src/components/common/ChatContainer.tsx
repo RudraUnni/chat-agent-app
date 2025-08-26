@@ -1,7 +1,6 @@
 import { useEffect, useRef, useState } from 'react'
-import { AlertCircle, Wifi, WifiOff, Menu, MessageCircle } from 'lucide-react'
+import { AlertCircle, Wifi, WifiOff, Menu } from 'lucide-react'
 import MessageBubble from './MessageBubble'
-import UserSetup from './UserSetup'
 import ConversationSidebar from './ConversationSidebar'
 import { 
   useAppDispatch, 
@@ -18,6 +17,7 @@ import { sendChatMessage, connectWebSocket } from '../../store/actions/websocket
 import { setConnectionError } from '../../store/slices/connectionSlice'
 import { setMessages } from '../../store/slices/chatSlice'
 import { fetchConversationHistory, loadConversationFromStorage } from '../../store/slices/conversationSlice'
+import { createDummyUser, setCurrentUser, loadUserFromStorage } from '../../store/slices/userSlice'
 import type { ChatMessage } from '../../types/chat'
 import ChatInput from './ChatInput'
 import TypingIndicator from '../../pages/Chat/components/TypingIndicator'
@@ -35,7 +35,7 @@ const ChatContainer = () => {
   const messagesEndRef = useRef<HTMLDivElement>(null)
   
   const [isSidebarOpen, setIsSidebarOpen] = useState(false)
-  const [userSetupComplete, setUserSetupComplete] = useState(false)
+  const [isInitialized, setIsInitialized] = useState(false)
 
   const handleSendMessage = (content: string) => {
     if (!content.trim() || !isConnected) return
@@ -52,19 +52,42 @@ const ChatContainer = () => {
     messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' })
   }
 
-  // Handle user setup completion
-  const handleUserSetupComplete = () => {
-    setUserSetupComplete(true)
-    // Load conversation from storage and connect WebSocket
-    dispatch(loadConversationFromStorage())
-    setTimeout(() => {
-      dispatch(connectWebSocket())
-    }, 100)
-  }
+  // Auto-setup default user on mount
+  useEffect(() => {
+    const initializeApp = async () => {
+      if (!isInitialized) {
+        try {
+          // Try to load user from storage first
+          dispatch(loadUserFromStorage())
+          
+          // If no user in storage, create a default test user
+          if (!currentUser) {
+            console.log('Creating default test user...')
+            await dispatch(createDummyUser()).unwrap()
+          }
+          
+          // Load conversation from storage
+          dispatch(loadConversationFromStorage())
+          
+          // Connect WebSocket
+          setTimeout(() => {
+            dispatch(connectWebSocket())
+          }, 100)
+          
+          setIsInitialized(true)
+        } catch (error) {
+          console.error('Failed to initialize app:', error)
+          setIsInitialized(true) // Still mark as initialized to avoid infinite loop
+        }
+      }
+    }
+
+    initializeApp()
+  }, [dispatch, currentUser, isInitialized])
 
   // Load conversation history when conversation changes
   useEffect(() => {
-    if (currentConversationId && userSetupComplete) {
+    if (currentConversationId && isInitialized && currentUser) {
       // Check if we already have history for this conversation
       const existingHistory = conversationHistory[currentConversationId]
       if (!existingHistory) {
@@ -74,7 +97,7 @@ const ChatContainer = () => {
         dispatch(setMessages(existingHistory))
       }
     }
-  }, [currentConversationId, userSetupComplete, dispatch, conversationHistory])
+  }, [currentConversationId, isInitialized, currentUser, dispatch, conversationHistory])
 
   // Update messages when conversation history is loaded
   useEffect(() => {
@@ -90,17 +113,6 @@ const ChatContainer = () => {
   useEffect(() => {
     scrollToBottom()
   }, [messages, isTyping])
-
-  // Check if user is already set up on mount
-  useEffect(() => {
-    if (currentUser) {
-      setUserSetupComplete(true)
-      dispatch(loadConversationFromStorage())
-      setTimeout(() => {
-        dispatch(connectWebSocket())
-      }, 100)
-    }
-  }, [currentUser, dispatch])
 
   const EmptyState = () => (
     <div className="flex-1 flex items-center justify-center p-8">
@@ -131,9 +143,16 @@ const ChatContainer = () => {
     </div>
   )
 
-  // Show user setup if no user is selected
-  if (!userSetupComplete) {
-    return <UserSetup onUserSelected={handleUserSetupComplete} />
+  // Show loading while initializing
+  if (!isInitialized || !currentUser) {
+    return (
+      <div className="flex items-center justify-center h-screen bg-white">
+        <div className="text-center">
+          <div className="w-8 h-8 border-4 border-blue-600 border-t-transparent rounded-full animate-spin mx-auto mb-4"></div>
+          <p className="text-gray-600">Initializing chat...</p>
+        </div>
+      </div>
+    )
   }
 
   return (

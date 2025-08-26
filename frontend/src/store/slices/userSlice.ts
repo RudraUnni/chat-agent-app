@@ -10,14 +10,12 @@ export interface User {
 
 interface UserState {
   currentUser: User | null
-  users: User[]
   isLoading: boolean
   error: string | null
 }
 
 const initialState: UserState = {
   currentUser: null,
-  users: [],
   isLoading: false,
   error: null,
 }
@@ -46,47 +44,7 @@ export const createDummyUser = createAsyncThunk(
   }
 )
 
-export const createUser = createAsyncThunk(
-  'user/create',
-  async (userData: { username: string; email: string }, { rejectWithValue }) => {
-    try {
-      const response = await fetch(`${API_ENDPOINTS.BASE_URL}/users/`, {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify(userData),
-      })
 
-      if (!response.ok) {
-        throw new Error(`HTTP error! status: ${response.status}`)
-      }
-
-      const user = await response.json()
-      return user
-    } catch (error) {
-      return rejectWithValue(error instanceof Error ? error.message : 'Failed to create user')
-    }
-  }
-)
-
-export const fetchUsers = createAsyncThunk(
-  'user/fetchAll',
-  async (_, { rejectWithValue }) => {
-    try {
-      const response = await fetch(`${API_ENDPOINTS.BASE_URL}/users/`)
-
-      if (!response.ok) {
-        throw new Error(`HTTP error! status: ${response.status}`)
-      }
-
-      const users = await response.json()
-      return users
-    } catch (error) {
-      return rejectWithValue(error instanceof Error ? error.message : 'Failed to fetch users')
-    }
-  }
-)
 
 const userSlice = createSlice({
   name: 'user',
@@ -129,7 +87,6 @@ const userSlice = createSlice({
       .addCase(createDummyUser.fulfilled, (state, action) => {
         state.isLoading = false
         state.currentUser = action.payload
-        state.users.push(action.payload)
         // Store in localStorage
         localStorage.setItem('currentUser', JSON.stringify(action.payload))
       })
@@ -138,38 +95,7 @@ const userSlice = createSlice({
         state.error = action.payload as string
       })
 
-    // Create custom user
-    builder
-      .addCase(createUser.pending, (state) => {
-        state.isLoading = true
-        state.error = null
-      })
-      .addCase(createUser.fulfilled, (state, action) => {
-        state.isLoading = false
-        state.currentUser = action.payload
-        state.users.push(action.payload)
-        // Store in localStorage
-        localStorage.setItem('currentUser', JSON.stringify(action.payload))
-      })
-      .addCase(createUser.rejected, (state, action) => {
-        state.isLoading = false
-        state.error = action.payload as string
-      })
 
-    // Fetch users
-    builder
-      .addCase(fetchUsers.pending, (state) => {
-        state.isLoading = true
-        state.error = null
-      })
-      .addCase(fetchUsers.fulfilled, (state, action) => {
-        state.isLoading = false
-        state.users = action.payload
-      })
-      .addCase(fetchUsers.rejected, (state, action) => {
-        state.isLoading = false
-        state.error = action.payload as string
-      })
   },
 })
 

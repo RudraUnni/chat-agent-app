@@ -17,7 +17,6 @@ export const useConnectionError = () => useAppSelector(state => state.connection
 
 // User selectors
 export const useCurrentUser = () => useAppSelector(state => state.user.currentUser)
-export const useUsers = () => useAppSelector(state => state.user.users)
 export const useUserLoading = () => useAppSelector(state => state.user.isLoading)
 export const useUserError = () => useAppSelector(state => state.user.error)
 

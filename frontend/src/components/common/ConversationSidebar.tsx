@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react'
-import { MessageCircle, Plus, Trash2, Edit2, User, LogOut, Loader2 } from 'lucide-react'
+import { MessageCircle, Plus, Trash2, Edit2, Loader2 } from 'lucide-react'
 import { 
   useAppDispatch, 
   useCurrentUser, 
@@ -16,7 +16,7 @@ import {
   clearError,
   addConversation
 } from '../../store/slices/conversationSlice'
-import { setCurrentUser } from '../../store/slices/userSlice'
+
 import { clearMessages } from '../../store/slices/chatSlice'
 import { connectWebSocket, disconnectWebSocket } from '../../store/actions/websocketActions'
 import type { Conversation } from '../../store/slices/conversationSlice'
@@ -129,13 +129,7 @@ const ConversationSidebar: React.FC<ConversationSidebarProps> = ({ isOpen, onTog
     setEditTitle('')
   }
 
-  const handleLogout = () => {
-    // Clear user and disconnect
-    dispatch(setCurrentUser(null))
-    dispatch(setCurrentConversationId(null))
-    dispatch(clearMessages())
-    dispatch(disconnectWebSocket())
-  }
+
 
   const handleClearError = () => {
     dispatch(clearError())
@@ -157,27 +151,18 @@ const ConversationSidebar: React.FC<ConversationSidebarProps> = ({ isOpen, onTog
       {/* Header */}
       <div className="flex items-center justify-between p-4 border-b border-gray-200">
         <div className="flex items-center space-x-2">
-          <User className="w-5 h-5 text-gray-600" />
+          <MessageCircle className="w-5 h-5 text-gray-600" />
           <div>
-            <div className="font-medium text-gray-900">{currentUser?.username}</div>
-            <div className="text-xs text-gray-500">{currentUser?.email}</div>
+            <div className="font-medium text-gray-900">Conversations</div>
+            <div className="text-xs text-gray-500">Medical Assistant</div>
           </div>
         </div>
-        <div className="flex items-center space-x-2">
-          <button
-            onClick={handleLogout}
-            className="p-1.5 text-gray-500 hover:text-red-600 transition-colors"
-            title="Logout"
-          >
-            <LogOut className="w-4 h-4" />
-          </button>
-          <button
-            onClick={onToggle}
-            className="p-1.5 text-gray-500 hover:text-gray-700 transition-colors"
-          >
-            ×
-          </button>
-        </div>
+        <button
+          onClick={onToggle}
+          className="p-1.5 text-gray-500 hover:text-gray-700 transition-colors"
+        >
+          ×
+        </button>
       </div>
 
       {/* New Conversation Button */}
