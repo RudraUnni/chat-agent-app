@@ -28,8 +28,24 @@ class Agent(OpenAIAgent):
         super().__init__(*args, **kwargs)
     
     async def invoke(self, user_input: str, **kwargs) -> str:
-        """Async wrapper for OpenAI Agent execution"""
+        """Async wrapper for OpenAI Agent execution - single message"""
         result = await OpenAIRunner.run(self, user_input)
+        return result.final_output
+    
+    async def invoke_with_history(self, messages: list, **kwargs) -> str:
+        """Async wrapper for OpenAI Agent execution with conversation history"""
+        # For now, we'll pass just the latest user message to maintain compatibility
+        # The OpenAI Agents SDK will handle conversation context internally
+        latest_user_message = ""
+        for msg in reversed(messages):
+            if msg["role"] == "user":
+                latest_user_message = msg["content"]
+                break
+        
+        if not latest_user_message:
+            latest_user_message = messages[-1]["content"] if messages else ""
+            
+        result = await OpenAIRunner.run(self, latest_user_message)
         return result.final_output
     
     def as_tool(self, name: str, description: str):

@@ -3,14 +3,18 @@ from datetime import datetime
 import uuid
 
 from app.workflows.base import WorkflowContext
+from app.database.connection import AsyncSessionLocal
+from app.database.models import Conversation
+from sqlalchemy.future import select
 
 
 class ChatSession:
     """Represents a chat session"""
     
-    def __init__(self, session_id: str = None, user_id: str = None):
+    def __init__(self, session_id: str = None, user_id: str = None, conversation_id: str = None):
         self.session_id = session_id or str(uuid.uuid4())
         self.user_id = user_id
+        self.conversation_id = conversation_id or self.session_id  # Use session_id as conversation_id by default
         self.created_at = datetime.now()
         self.last_activity = datetime.now()
         self.context = WorkflowContext(
@@ -48,6 +52,30 @@ class ChatManager:
             session.update_activity()
             return session
         return self.create_session(user_id)
+    
+    async def ensure_conversation_exists(self, session: ChatSession) -> str:
+        """Ensure database conversation exists for session"""
+        async with AsyncSessionLocal() as db:
+            try:
+                # Check if conversation exists
+                stmt = select(Conversation).where(Conversation.id == session.conversation_id)
+                result = await db.execute(stmt)
+                conversation = result.scalar_one_or_none()
+                
+                if not conversation:
+                    # Create new conversation
+                    conversation = Conversation(
+                        id=session.conversation_id,
+                        user_id=session.user_id,
+                        title="Chat Session"
+                    )
+                    db.add(conversation)
+                    await db.commit()
+                    
+                return session.conversation_id
+            except Exception as e:
+                await db.rollback()
+                raise e
     
     def delete_session(self, session_id: str):
         """Delete a session"""

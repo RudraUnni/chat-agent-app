@@ -1,7 +1,7 @@
 import logging
 from typing import Any, Dict, Optional
 from app.workflows.base import BaseWorkflow, WorkflowContext, WorkflowResult
-from .agents import orchestrate
+from .agents import orchestrate, orchestrate_with_history
 
 logger = logging.getLogger(__name__)
 
@@ -21,12 +21,22 @@ class PubMedResearchWorkflow(BaseWorkflow):
         context: Optional[WorkflowContext] = None,
     ) -> WorkflowResult:
         user_input = input_data.get("query") or input_data.get("text") or input_data.get("message") or ""
+        conversation_history = input_data.get("conversation_history", [])
+        
         if not user_input:
             return WorkflowResult(success=False, error="Missing 'query', 'text', or 'message'")
 
         try:
             logger.debug(f"Orchestrating input: {user_input[:100]}...")
-            output = await orchestrate(user_input)
+            
+            # Use history-aware orchestration if history is provided
+            if conversation_history:
+                # Add current message to history
+                full_messages = conversation_history + [{"role": "user", "content": user_input}]
+                output = await orchestrate_with_history(full_messages)
+            else:
+                output = await orchestrate(user_input)
+                
             logger.debug(f"Orchestration complete, output length: {len(output)}")
             return WorkflowResult(success=True, data={"output": output})
         except Exception as exc:

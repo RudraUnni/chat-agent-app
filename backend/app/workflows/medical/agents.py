@@ -41,3 +41,7 @@ orchestrator = Agent(
 
 async def orchestrate(input_text: str) -> str:
     return await orchestrator.invoke(input_text)
+
+async def orchestrate_with_history(messages: list) -> str:
+    """Orchestrate with conversation history"""
+    return await orchestrator.invoke_with_history(messages)
