@@ -58,19 +58,32 @@ class ChatManager:
         async with AsyncSessionLocal() as db:
             try:
                 # Check if conversation exists
-                stmt = select(Conversation).where(Conversation.id == session.conversation_id)
+                from uuid import UUID
+                conversation_uuid = UUID(session.conversation_id) if isinstance(session.conversation_id, str) else session.conversation_id
+                stmt = select(Conversation).where(Conversation.id == conversation_uuid)
                 result = await db.execute(stmt)
                 conversation = result.scalar_one_or_none()
                 
                 if not conversation:
                     # Create new conversation
-                    conversation = Conversation(
-                        id=session.conversation_id,
-                        user_id=session.user_id,
-                        title="Chat Session"
-                    )
-                    db.add(conversation)
-                    await db.commit()
+                    # Convert user_id to UUID if provided, otherwise skip conversation creation
+                    if session.user_id:
+                        from uuid import UUID
+                        user_uuid = UUID(session.user_id) if isinstance(session.user_id, str) else session.user_id
+                        conversation_uuid = UUID(session.conversation_id) if isinstance(session.conversation_id, str) else session.conversation_id
+                        conversation = Conversation(
+                            id=conversation_uuid,
+                            user_id=user_uuid,
+                            title="Chat Session"
+                        )
+                        db.add(conversation)
+                        await db.commit()
+                    else:
+                        # Cannot create conversation without user_id due to DB constraints
+                        import logging
+                        logger = logging.getLogger(__name__)
+                        logger.warning(f"Cannot create conversation {session.conversation_id} without user_id")
+                        raise ValueError("user_id is required to create conversation")
                     
                 return session.conversation_id
             except Exception as e:
