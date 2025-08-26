@@ -27,9 +27,14 @@ class Agent(OpenAIAgent):
         _ensure_api_key()
         super().__init__(*args, **kwargs)
     
-    async def invoke(self, user_input: str, **kwargs) -> str:
-        """Async wrapper for OpenAI Agent execution"""
-        result = await OpenAIRunner.run(self, user_input)
+    async def invoke(self, user_input: str, conversation_history: list = None, **kwargs) -> str:
+        """Async wrapper for OpenAI Agent execution with conversation history"""
+        if conversation_history:
+            # Use conversation history instead of just the current message
+            result = await OpenAIRunner.run(self, conversation_history)
+        else:
+            # Fallback to single message
+            result = await OpenAIRunner.run(self, user_input)
         return result.final_output
     
     def as_tool(self, name: str, description: str):

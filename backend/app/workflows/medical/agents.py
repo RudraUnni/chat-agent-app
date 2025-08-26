@@ -39,5 +39,5 @@ orchestrator = Agent(
 )
 
 
-async def orchestrate(input_text: str) -> str:
-    return await orchestrator.invoke(input_text)
+async def orchestrate(input_text: str, conversation_history: list = None) -> str:
+    return await orchestrator.invoke(input_text, conversation_history=conversation_history)

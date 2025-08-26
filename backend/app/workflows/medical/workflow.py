@@ -26,7 +26,14 @@ class PubMedResearchWorkflow(BaseWorkflow):
 
         try:
             logger.debug(f"Orchestrating input: {user_input[:100]}...")
-            output = await orchestrate(user_input)
+            
+            # Get conversation history from context if available
+            conversation_history = None
+            if context and context.history:
+                conversation_history = context.history
+                logger.debug(f"Using conversation history with {len(conversation_history)} messages")
+            
+            output = await orchestrate(user_input, conversation_history=conversation_history)
             logger.debug(f"Orchestration complete, output length: {len(output)}")
             return WorkflowResult(success=True, data={"output": output})
         except Exception as exc:

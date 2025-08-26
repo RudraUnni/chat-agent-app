@@ -17,10 +17,13 @@ class DatabaseChatService:
     def __init__(self, db: AsyncSession):
         self.db = db
     
-    async def create_user(self, username: str, email: str) -> User:
+    async def create_user(self, username: str, email: str, user_id: Optional[UUID] = None) -> User:
         """Create a new user"""
         try:
-            user = User(username=username, email=email)
+            user_data = {"username": username, "email": email}
+            if user_id:
+                user_data["id"] = user_id
+            user = User(**user_data)
             self.db.add(user)
             await self.db.commit()
             await self.db.refresh(user)
@@ -96,3 +99,15 @@ class DatabaseChatService:
             .order_by(Message.sequence_number.asc())
         )
         return result.scalars().all()
+    
+    async def get_recent_messages(self, conversation_id: UUID, limit: int = 10) -> List[Message]:
+        """Get recent messages for a conversation"""
+        result = await self.db.execute(
+            select(Message)
+            .where(Message.conversation_id == conversation_id)
+            .order_by(Message.sequence_number.desc())
+            .limit(limit)
+        )
+        # Return in chronological order (oldest first)
+        messages = result.scalars().all()
+        return list(reversed(messages))
