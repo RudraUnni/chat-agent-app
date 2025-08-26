@@ -60,7 +60,11 @@ async def websocket_chat_endpoint(
     # Get or create session
     session = chat_manager.get_or_create_session(session_id)
     
-    # Initialize conversation setup with manual database session
+    # IMPORTANT: Accept WebSocket connection FIRST before any other operations
+    await manager.connect(session_id, websocket)
+    logger.info(f"WebSocket connected: session_id={session_id}")
+    
+    # Initialize conversation setup with manual database session AFTER connection
     conversation_id = None
     default_user_id = uuid.UUID('00000000-0000-0000-0000-000000000001')
     
@@ -99,11 +103,8 @@ async def websocket_chat_endpoint(
             # Continue without database - fallback to in-memory only
             conversation_id = None
     
-    # Setup conversation
+    # Setup conversation AFTER WebSocket is connected
     await setup_conversation()
-    
-    await manager.connect(session_id, websocket)
-    logger.info(f"WebSocket connected: session_id={session_id}")
     
     try:
         # Send welcome message
