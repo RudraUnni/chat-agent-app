@@ -1,15 +1,23 @@
-import { useEffect, useRef } from 'react'
-import { AlertCircle, Wifi, WifiOff } from 'lucide-react'
+import { useEffect, useRef, useState } from 'react'
+import { AlertCircle, Wifi, WifiOff, Menu, MessageCircle } from 'lucide-react'
 import MessageBubble from './MessageBubble'
+import UserSetup from './UserSetup'
+import ConversationSidebar from './ConversationSidebar'
 import { 
   useAppDispatch, 
   useMessages, 
   useIsConnected, 
   useIsTyping, 
-  useConnectionError 
+  useConnectionError,
+  useCurrentUser,
+  useCurrentConversationId,
+  useConversationHistory,
+  useConversationHistoryLoading
 } from '../../store/hooks'
-import { sendChatMessage } from '../../store/actions/websocketActions'
+import { sendChatMessage, connectWebSocket } from '../../store/actions/websocketActions'
 import { setConnectionError } from '../../store/slices/connectionSlice'
+import { setMessages } from '../../store/slices/chatSlice'
+import { fetchConversationHistory, loadConversationFromStorage } from '../../store/slices/conversationSlice'
 import type { ChatMessage } from '../../types/chat'
 import ChatInput from './ChatInput'
 import TypingIndicator from '../../pages/Chat/components/TypingIndicator'
@@ -20,7 +28,14 @@ const ChatContainer = () => {
   const isConnected = useIsConnected()
   const isTyping = useIsTyping()
   const connectionError = useConnectionError()
+  const currentUser = useCurrentUser()
+  const currentConversationId = useCurrentConversationId()
+  const conversationHistory = useConversationHistory()
+  const isLoadingHistory = useConversationHistoryLoading()
   const messagesEndRef = useRef<HTMLDivElement>(null)
+  
+  const [isSidebarOpen, setIsSidebarOpen] = useState(false)
+  const [userSetupComplete, setUserSetupComplete] = useState(false)
 
   const handleSendMessage = (content: string) => {
     if (!content.trim() || !isConnected) return
@@ -37,9 +52,55 @@ const ChatContainer = () => {
     messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' })
   }
 
+  // Handle user setup completion
+  const handleUserSetupComplete = () => {
+    setUserSetupComplete(true)
+    // Load conversation from storage and connect WebSocket
+    dispatch(loadConversationFromStorage())
+    setTimeout(() => {
+      dispatch(connectWebSocket())
+    }, 100)
+  }
+
+  // Load conversation history when conversation changes
+  useEffect(() => {
+    if (currentConversationId && userSetupComplete) {
+      // Check if we already have history for this conversation
+      const existingHistory = conversationHistory[currentConversationId]
+      if (!existingHistory) {
+        dispatch(fetchConversationHistory(currentConversationId))
+      } else {
+        // Load existing history into chat messages
+        dispatch(setMessages(existingHistory))
+      }
+    }
+  }, [currentConversationId, userSetupComplete, dispatch, conversationHistory])
+
+  // Update messages when conversation history is loaded
+  useEffect(() => {
+    if (currentConversationId && conversationHistory[currentConversationId]) {
+      const history = conversationHistory[currentConversationId]
+      // Only update if messages are different (avoid infinite loops)
+      if (JSON.stringify(messages) !== JSON.stringify(history)) {
+        dispatch(setMessages(history))
+      }
+    }
+  }, [conversationHistory, currentConversationId, messages, dispatch])
+
   useEffect(() => {
     scrollToBottom()
   }, [messages, isTyping])
+
+  // Check if user is already set up on mount
+  useEffect(() => {
+    if (currentUser) {
+      setUserSetupComplete(true)
+      dispatch(loadConversationFromStorage())
+      setTimeout(() => {
+        dispatch(connectWebSocket())
+      }, 100)
+    }
+  }, [currentUser, dispatch])
 
   const EmptyState = () => (
     <div className="flex-1 flex items-center justify-center p-8">
@@ -70,25 +131,56 @@ const ChatContainer = () => {
     </div>
   )
 
+  // Show user setup if no user is selected
+  if (!userSetupComplete) {
+    return <UserSetup onUserSelected={handleUserSetupComplete} />
+  }
+
   return (
-    <div className="flex flex-col h-screen max-w-4xl mx-auto bg-white">
-      {/* Header */}
-      <div className="flex items-center justify-between p-4 border-b bg-white shadow-sm">
-        <h1 className="text-xl font-semibold text-gray-900">Medical Assistant</h1>
-        <div className="flex items-center space-x-2">
-          {isConnected ? (
-            <div className="flex items-center text-green-600">
-              <Wifi className="w-4 h-4 mr-1" />
-              <span className="text-sm font-medium">Connected</span>
-            </div>
-          ) : (
-            <div className="flex items-center text-red-600">
-              <WifiOff className="w-4 h-4 mr-1" />
-              <span className="text-sm font-medium">Disconnected</span>
-            </div>
-          )}
+    <div className="flex h-screen bg-white">
+      {/* Conversation Sidebar */}
+      <ConversationSidebar isOpen={isSidebarOpen} onToggle={() => setIsSidebarOpen(!isSidebarOpen)} />
+      
+      {/* Main Chat Area */}
+      <div className={`flex flex-col flex-1 transition-all duration-300 ${isSidebarOpen ? 'ml-80' : 'ml-0'}`}>
+        {/* Header */}
+        <div className="flex items-center justify-between p-4 border-b bg-white shadow-sm">
+          <div className="flex items-center space-x-3">
+            {!isSidebarOpen && (
+              <button
+                onClick={() => setIsSidebarOpen(true)}
+                className="p-2 hover:bg-gray-100 rounded-lg transition-colors"
+              >
+                <Menu className="w-5 h-5 text-gray-600" />
+              </button>
+            )}
+            <h1 className="text-xl font-semibold text-gray-900">Medical Assistant</h1>
+            {currentConversationId && (
+              <span className="text-sm text-gray-500">
+                • Conversation {currentConversationId.slice(-8)}
+              </span>
+            )}
+          </div>
+          <div className="flex items-center space-x-2">
+            {isLoadingHistory && (
+              <div className="flex items-center text-blue-600 mr-3">
+                <div className="w-4 h-4 border-2 border-blue-600 border-t-transparent rounded-full animate-spin mr-2"></div>
+                <span className="text-sm font-medium">Loading history...</span>
+              </div>
+            )}
+            {isConnected ? (
+              <div className="flex items-center text-green-600">
+                <Wifi className="w-4 h-4 mr-1" />
+                <span className="text-sm font-medium">Connected</span>
+              </div>
+            ) : (
+              <div className="flex items-center text-red-600">
+                <WifiOff className="w-4 h-4 mr-1" />
+                <span className="text-sm font-medium">Disconnected</span>
+              </div>
+            )}
+          </div>
         </div>
-      </div>
 
       {/* Error Display */}
       {connectionError && (
@@ -104,46 +196,47 @@ const ChatContainer = () => {
         </div>
       )}
 
-      {/* Messages Area */}
-      <div className="flex-1 overflow-hidden">
-        {messages.length === 0 ? (
-          <EmptyState />
-        ) : (
-          <div 
-            className="h-full overflow-y-auto px-4 py-6 space-y-1"
-            role="log"
-            aria-label="Chat messages"
-          >
-            {messages.map((message: ChatMessage) => (
-              <MessageBubble key={message.id} message={message} />
-            ))}
-            
-            {/* Typing Indicator */}
-            {isTyping && (
-              <div className="flex justify-start mb-4">
-                <div className="max-w-[70%] bg-gray-100 rounded-2xl rounded-bl-md px-4 py-3">
-                  <TypingIndicator />
+        {/* Messages Area */}
+        <div className="flex-1 overflow-hidden">
+          {messages.length === 0 ? (
+            <EmptyState />
+          ) : (
+            <div 
+              className="h-full overflow-y-auto px-4 py-6 space-y-1"
+              role="log"
+              aria-label="Chat messages"
+            >
+              {messages.map((message: ChatMessage) => (
+                <MessageBubble key={message.id} message={message} />
+              ))}
+              
+              {/* Typing Indicator */}
+              {isTyping && (
+                <div className="flex justify-start mb-4">
+                  <div className="max-w-[70%] bg-gray-100 rounded-2xl rounded-bl-md px-4 py-3">
+                    <TypingIndicator />
+                  </div>
                 </div>
-              </div>
-            )}
-            
-            {/* Auto-scroll anchor */}
-            <div ref={messagesEndRef} />
-          </div>
-        )}
-      </div>
+              )}
+              
+              {/* Auto-scroll anchor */}
+              <div ref={messagesEndRef} />
+            </div>
+          )}
+        </div>
 
-      {/* Input Area */}
-      <div className="border-t bg-white">
-        <ChatInput
-          onSendMessage={handleSendMessage}
-          disabled={!isConnected}
-          placeholder={
-            isConnected 
-              ? "Type your message..." 
-              : "Connecting..."
-          }
-        />
+        {/* Input Area */}
+        <div className="border-t bg-white">
+          <ChatInput
+            onSendMessage={handleSendMessage}
+            disabled={!isConnected}
+            placeholder={
+              isConnected 
+                ? "Type your message..." 
+                : "Connecting..."
+            }
+          />
+        </div>
       </div>
     </div>
   )

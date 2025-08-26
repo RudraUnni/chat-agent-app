@@ -1,12 +1,16 @@
 import { configureStore } from '@reduxjs/toolkit'
 import chatReducer from './slices/chatSlice'
 import connectionReducer from './slices/connectionSlice'
+import userReducer from './slices/userSlice'
+import conversationReducer from './slices/conversationSlice'
 import { websocketMiddleware } from './middleware/websocketMiddleware'
 
 export const store = configureStore({
   reducer: {
     chat: chatReducer,
     connection: connectionReducer,
+    user: userReducer,
+    conversation: conversationReducer,
   },
   middleware: (getDefaultMiddleware) =>
     getDefaultMiddleware({

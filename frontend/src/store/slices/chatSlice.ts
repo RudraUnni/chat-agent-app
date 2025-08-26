@@ -34,6 +34,11 @@ const chatSlice = createSlice({
       state.messages = state.messages.filter(msg => msg.id !== action.payload)
     },
     
+    setMessages: (state, action: PayloadAction<ChatMessage[]>) => {
+      state.messages = action.payload
+      state.streamingMessageId = null
+    },
+    
     clearMessages: (state) => {
       state.messages = []
       state.streamingMessageId = null
@@ -96,6 +101,7 @@ export const {
   addMessage,
   updateMessage,
   deleteMessage,
+  setMessages,
   clearMessages,
   setTyping,
   setStreamingMessageId,

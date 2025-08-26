@@ -38,7 +38,23 @@ export const websocketMiddleware: Middleware<Record<string, never>, RootState> =
     }
 
     store.dispatch(setConnecting(true))
-    const ws = new WebSocket(API_ENDPOINTS.WS_URL)
+    
+    // Build WebSocket URL with user_id and conversation_id if available
+    let wsUrl = API_ENDPOINTS.WS_URL
+    const { currentUser } = state.user
+    const { currentConversationId } = state.conversation
+    
+    if (currentConversationId) {
+      wsUrl = `${API_ENDPOINTS.WS_URL.replace('/chat', `/chat/${currentConversationId}`)}`
+    }
+    
+    if (currentUser) {
+      const separator = wsUrl.includes('?') ? '&' : '?'
+      wsUrl += `${separator}user_id=${currentUser.id}`
+    }
+    
+    console.log('Connecting to WebSocket:', wsUrl)
+    const ws = new WebSocket(wsUrl)
 
     ws.onopen = () => {
       console.log('✅ WebSocket connected')
