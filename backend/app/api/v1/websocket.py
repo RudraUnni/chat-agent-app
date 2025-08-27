@@ -10,7 +10,7 @@ from app.services.llm.factory import LLMFactory
 from app.core.config import get_settings
 from app.core.workflow_utils import extract_workflow_response, format_workflow_error
 from app.database.connection import AsyncSessionLocal
-from app.database.models import Message
+from app.database.models import Message, User
 from sqlalchemy.future import select
 from sqlalchemy import func
 
@@ -41,6 +41,37 @@ class ConnectionManager:
                 raise
 
 manager = ConnectionManager()
+
+
+async def get_or_create_default_test_user() -> str:
+    """Get or create a default test user for development/testing purposes"""
+    async with AsyncSessionLocal() as db:
+        try:
+            # Try to find existing default test user
+            stmt = select(User).where(User.username == "default_test_user")
+            result = await db.execute(stmt)
+            user = result.scalar_one_or_none()
+            
+            if user:
+                logger.info(f"Using existing default test user: {user.id}")
+                return str(user.id)
+            
+            # Create new default test user
+            user = User(
+                username="default_test_user",
+                email="test@example.com"
+            )
+            db.add(user)
+            await db.commit()
+            await db.refresh(user)
+            
+            logger.info(f"Created new default test user: {user.id}")
+            return str(user.id)
+            
+        except Exception as e:
+            await db.rollback()
+            logger.error(f"Failed to get/create default test user: {e}")
+            raise
 
 
 async def store_message(conversation_id: str, role: str, content: str) -> None:
@@ -145,15 +176,17 @@ async def websocket_chat_with_conversation(
     # Setup session and database - MUST succeed for persistence to work
     session = None
     try:
+        # If no user_id provided, use default test user for persistence
+        if not user_id:
+            user_id = await get_or_create_default_test_user()
+            logger.info(f"No user_id provided, using default test user: {user_id}")
+        
         # Get or create session with user_id and conversation_id
         session = chat_manager.get_or_create_session(session_id, user_id)
         session.conversation_id = conversation_id  # Override conversation_id
         logger.info(f"Session created/retrieved: session_id={session_id}, user_id={user_id}, conversation_id={conversation_id}")
         
-        # Ensure database conversation exists - this MUST succeed
-        if not user_id:
-            raise ValueError("user_id is required for conversation persistence")
-            
+        # Ensure database conversation exists - this should now always succeed
         await chat_manager.ensure_conversation_exists(session)
         logger.info(f"Database conversation ensured: conversation_id={session.conversation_id}")
         
