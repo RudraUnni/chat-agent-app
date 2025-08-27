@@ -94,7 +94,29 @@ async def get_conversation_history(conversation_id: str, limit: int = 20) -> Lis
 @router.websocket("/chat")
 async def websocket_chat_endpoint(
     websocket: WebSocket,
-    session_id: Optional[str] = None
+    session_id: Optional[str] = None,
+    user_id: Optional[str] = None
+):
+    """WebSocket endpoint for real-time chat with workflows"""
+    await websocket_chat_with_conversation(websocket, None, session_id, user_id)
+
+
+@router.websocket("/chat/{conversation_id}")
+async def websocket_chat_endpoint_with_conversation(
+    websocket: WebSocket,
+    conversation_id: str,
+    session_id: Optional[str] = None,
+    user_id: Optional[str] = None
+):
+    """WebSocket endpoint for real-time chat with specific conversation"""
+    await websocket_chat_with_conversation(websocket, conversation_id, session_id, user_id)
+
+
+async def websocket_chat_with_conversation(
+    websocket: WebSocket,
+    conversation_id: Optional[str] = None,
+    session_id: Optional[str] = None,
+    user_id: Optional[str] = None
 ):
     """WebSocket endpoint for real-time chat with workflows"""
     
@@ -108,27 +130,44 @@ async def websocket_chat_endpoint(
         session_id = str(uuid.uuid4())
         logger.info(f"Generated new session_id: {session_id}")
     
+    # Use conversation_id if provided, otherwise use session_id
+    if not conversation_id:
+        conversation_id = session_id
+        logger.info(f"Using session_id as conversation_id: {conversation_id}")
+    
+    logger.info(f"WebSocket params: session_id={session_id}, conversation_id={conversation_id}, user_id={user_id}")
+    
     # Get dependencies using the same pattern as REST endpoints
     from app.core.dependencies import get_workflow_registry, get_chat_manager
     workflow_registry = get_workflow_registry()
     chat_manager = get_chat_manager()
     
-    # Setup session and database - with error handling to not break connection
+    # Setup session and database - MUST succeed for persistence to work
     session = None
     try:
-        # Get or create session
-        session = chat_manager.get_or_create_session(session_id)
-        logger.info(f"Session created/retrieved: session_id={session_id}")
+        # Get or create session with user_id and conversation_id
+        session = chat_manager.get_or_create_session(session_id, user_id)
+        session.conversation_id = conversation_id  # Override conversation_id
+        logger.info(f"Session created/retrieved: session_id={session_id}, user_id={user_id}, conversation_id={conversation_id}")
         
-        # Ensure database conversation exists
+        # Ensure database conversation exists - this MUST succeed
+        if not user_id:
+            raise ValueError("user_id is required for conversation persistence")
+            
         await chat_manager.ensure_conversation_exists(session)
         logger.info(f"Database conversation ensured: conversation_id={session.conversation_id}")
         
     except Exception as e:
         logger.error(f"Failed to setup session/database for {session_id}: {e}")
-        # Continue anyway - we can still chat without persistence
-        if not session:
-            session = chat_manager.get_or_create_session(session_id)
+        # Send error message to client and close connection
+        error_msg = {
+            "type": "error",
+            "content": f"Failed to initialize conversation: {str(e)}",
+            "timestamp": datetime.now().isoformat()
+        }
+        await websocket.send_text(json.dumps(error_msg))
+        await websocket.close(code=1011, reason="Database setup failed")
+        return
     
     # Register connection after accept
     manager.active_connections[session_id] = websocket
