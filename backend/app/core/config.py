@@ -25,6 +25,7 @@ class Settings(BaseSettings):
     rate_limit_window: int = 3600
     
     # Database
+    database_url: Optional[str] = None  # Optional full async DB URL (e.g., sqlite for tests)
     database_host: str = "localhost"
     database_port: int = 5432
     database_name: str = "chatapp_db"
@@ -56,7 +57,12 @@ class Settings(BaseSettings):
         
     @property
     def async_database_url(self) -> str:
-        """Get async database URL for SQLAlchemy"""
+        """Get async database URL for SQLAlchemy.
+        If DATABASE_URL is provided (e.g., for tests), use it. Otherwise fall back to Postgres settings.
+        """
+        # Prefer explicit DATABASE_URL if provided (e.g., sqlite+aiosqlite:///./test.db)
+        if self.database_url:
+            return self.database_url
         return f"postgresql+asyncpg://{self.database_user}:{self.database_password}@{self.database_host}:{self.database_port}/{self.database_name}"
 
 

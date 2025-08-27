@@ -269,7 +269,8 @@ async def websocket_chat_with_conversation(
             try:
                 message_data = json.loads(data)
                 print(f"💬 PARSED MESSAGE: {message_data}")
-                user_message = message_data.get("content", "")
+                # Accept both 'message' (used by tests) and 'content' (internal)
+                user_message = message_data.get("message") or message_data.get("content", "")
                 workflow_name = message_data.get("workflow", "pubmed_research")  # Default to Medical Assistant
                 parameters = message_data.get("parameters", {})
                 
