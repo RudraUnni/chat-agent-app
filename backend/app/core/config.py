@@ -57,7 +57,8 @@ class Settings(BaseSettings):
     @property
     def async_database_url(self) -> str:
         """Get async database URL for SQLAlchemy"""
-        return f"postgresql+asyncpg://{self.database_user}:{self.database_password}@{self.database_host}:{self.database_port}/{self.database_name}"
+        # Use SQLite for development/testing
+        return "sqlite+aiosqlite:///./chat_app.db"
 
 
 # Global settings instance

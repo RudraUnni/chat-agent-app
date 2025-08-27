@@ -92,23 +92,28 @@ async def get_conversation_history(conversation_id: str, limit: int = 20) -> Lis
             return []
 
 @router.websocket("/chat")
-async def websocket_chat_endpoint(
-    websocket: WebSocket,
-    session_id: Optional[str] = None,
-    user_id: Optional[str] = None
-):
+async def websocket_chat_endpoint(websocket: WebSocket):
     """WebSocket endpoint for real-time chat with workflows"""
-    await websocket_chat_with_conversation(websocket, None, session_id, user_id)
+    # Extract query parameters manually
+    query_params = dict(websocket.query_params)
+    session_id = query_params.get("session_id")
+    user_id = query_params.get("user_id")
+    conversation_id = None
+    
+    await websocket_chat_with_conversation(websocket, conversation_id, session_id, user_id)
 
 
 @router.websocket("/chat/{conversation_id}")
 async def websocket_chat_endpoint_with_conversation(
     websocket: WebSocket,
-    conversation_id: str,
-    session_id: Optional[str] = None,
-    user_id: Optional[str] = None
+    conversation_id: str
 ):
     """WebSocket endpoint for real-time chat with specific conversation"""
+    # Extract query parameters manually
+    query_params = dict(websocket.query_params)
+    session_id = query_params.get("session_id")
+    user_id = query_params.get("user_id")
+    
     await websocket_chat_with_conversation(websocket, conversation_id, session_id, user_id)
 
 

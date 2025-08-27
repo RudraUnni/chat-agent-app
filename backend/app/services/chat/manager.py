@@ -66,37 +66,33 @@ class ChatManager:
                 if not session.conversation_id:
                     raise ValueError("conversation_id is required")
                 
-                # Convert to UUIDs
-                from uuid import UUID
-                try:
-                    conversation_uuid = UUID(session.conversation_id) if isinstance(session.conversation_id, str) else session.conversation_id
-                    user_uuid = UUID(session.user_id) if isinstance(session.user_id, str) else session.user_id
-                except ValueError as e:
-                    raise ValueError(f"Invalid UUID format: {e}")
+                # Use string IDs directly (no UUID conversion needed)
+                conversation_id = session.conversation_id
+                user_id = session.user_id
                 
-                logger.info(f"Checking conversation exists: conversation_id={conversation_uuid}, user_id={user_uuid}")
+                logger.info(f"Checking conversation exists: conversation_id={conversation_id}, user_id={user_id}")
                 
                 # Check if conversation exists
-                stmt = select(Conversation).where(Conversation.id == conversation_uuid)
+                stmt = select(Conversation).where(Conversation.id == conversation_id)
                 result = await db.execute(stmt)
                 conversation = result.scalar_one_or_none()
                 
                 if not conversation:
-                    logger.info(f"Creating new conversation: {conversation_uuid}")
+                    logger.info(f"Creating new conversation: {conversation_id}")
                     
                     # Create new conversation
                     conversation = Conversation(
-                        id=conversation_uuid,
-                        user_id=user_uuid,
+                        id=conversation_id,
+                        user_id=user_id,
                         title="Chat Session"
                     )
                     db.add(conversation)
                     await db.commit()
                     await db.refresh(conversation)
                     
-                    logger.info(f"✅ Conversation created successfully: {conversation_uuid}")
+                    logger.info(f"✅ Conversation created successfully: {conversation_id}")
                 else:
-                    logger.info(f"✅ Conversation already exists: {conversation_uuid}")
+                    logger.info(f"✅ Conversation already exists: {conversation_id}")
                     
                 return str(session.conversation_id)
                 
