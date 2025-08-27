@@ -1,6 +1,6 @@
 from fastapi import APIRouter, Depends
 from sqlalchemy.ext.asyncio import AsyncSession
-from app.api.v1 import chat, conversations
+from app.api.v1 import chat, conversations, users
 from app.database.connection import get_db
 from app.services.database.chat_service import DatabaseChatService
 import uuid
@@ -30,5 +30,6 @@ async def create_dummy_user(db: AsyncSession = Depends(get_db)):
     }
 
 # Include routers
+api_router.include_router(users.router)
 api_router.include_router(chat.router)
 api_router.include_router(conversations.router)

@@ -48,11 +48,17 @@ class DatabaseChatService:
     
     async def create_conversation(self, user_id: UUID, title: str = "New Conversation") -> Conversation:
         """Create a new conversation"""
-        conversation = Conversation(user_id=user_id, title=title)
-        self.db.add(conversation)
-        await self.db.commit()
-        await self.db.refresh(conversation)
-        return conversation
+        try:
+            conversation = Conversation(user_id=user_id, title=title)
+            self.db.add(conversation)
+            await self.db.commit()
+            await self.db.refresh(conversation)
+            logger.info(f"Created conversation {conversation.id} for user {user_id}")
+            return conversation
+        except SQLAlchemyError as e:
+            await self.db.rollback()
+            logger.error(f"Database error during conversation creation: {e}")
+            raise DatabaseError("Failed to create conversation", error_code="DB_CREATE_ERROR")
     
     async def get_conversation(self, conversation_id: UUID) -> Optional[Conversation]:
         """Get a conversation by ID"""
@@ -70,23 +76,29 @@ class DatabaseChatService:
     
     async def add_message(self, conversation_id: UUID, content: str, role: str = "user") -> Message:
         """Add a message to a conversation"""
-        # Get current message count for sequence number
-        result = await self.db.execute(
-            select(func.count(Message.id))
-            .where(Message.conversation_id == conversation_id)
-        )
-        sequence_number = result.scalar() + 1
-        
-        message = Message(
-            conversation_id=conversation_id,
-            content=content,
-            role=role,
-            sequence_number=sequence_number
-        )
-        self.db.add(message)
-        await self.db.commit()
-        await self.db.refresh(message)
-        return message
+        try:
+            # Get current message count for sequence number
+            result = await self.db.execute(
+                select(func.count(Message.id))
+                .where(Message.conversation_id == conversation_id)
+            )
+            sequence_number = result.scalar() + 1
+            
+            message = Message(
+                conversation_id=conversation_id,
+                content=content,
+                role=role,
+                sequence_number=sequence_number
+            )
+            self.db.add(message)
+            await self.db.commit()
+            await self.db.refresh(message)
+            logger.info(f"Added message {message.id} to conversation {conversation_id}")
+            return message
+        except SQLAlchemyError as e:
+            await self.db.rollback()
+            logger.error(f"Database error during message creation: {e}")
+            raise DatabaseError("Failed to add message", error_code="DB_CREATE_ERROR")
     
     async def get_messages(self, conversation_id: UUID) -> List[Message]:
         """Get all messages for a conversation"""

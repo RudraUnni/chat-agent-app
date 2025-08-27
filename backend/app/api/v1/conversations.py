@@ -7,6 +7,7 @@ from datetime import datetime
 
 from app.database.connection import get_db
 from app.database.models import Conversation, Message, User
+from app.services.database.chat_service import DatabaseChatService
 from sqlalchemy.future import select
 from sqlalchemy.orm import selectinload
 
@@ -47,6 +48,11 @@ class ConversationWithMessagesResponse(BaseModel):
 
     class Config:
         from_attributes = True
+
+
+class ConversationCreate(BaseModel):
+    user_id: str
+    title: Optional[str] = "New Conversation"
 
 
 def parse_conversation_id(conversation_id: str) -> UUID:
@@ -306,3 +312,83 @@ async def update_conversation_title(
     await db.commit()
     
     return {"message": "Conversation title updated successfully", "title": title}
+
+
+@router.post("/", response_model=ConversationResponse)
+async def create_conversation(
+    conversation_data: ConversationCreate,
+    db: AsyncSession = Depends(get_db)
+):
+    """Create a new conversation"""
+    try:
+        user_uuid = UUID(conversation_data.user_id)
+    except ValueError:
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail="Invalid user ID format"
+        )
+    
+    # Check if user exists
+    user_stmt = select(User).where(User.id == user_uuid)
+    user_result = await db.execute(user_stmt)
+    user = user_result.scalar_one_or_none()
+    
+    if not user:
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail="User not found"
+        )
+    
+    # Create conversation using the service
+    chat_service = DatabaseChatService(db)
+    conversation = await chat_service.create_conversation(user_uuid, conversation_data.title)
+    
+    return ConversationResponse(
+        id=str(conversation.id),
+        user_id=str(conversation.user_id),
+        title=conversation.title,
+        created_at=conversation.created_at,
+        updated_at=conversation.updated_at,
+        message_count=0,
+        last_message_preview=None
+    )
+
+
+@router.post("/{conversation_id}/messages", response_model=MessageResponse)
+async def add_message_to_conversation(
+    conversation_id: str,
+    content: str = Query(..., description="Message content"),
+    role: str = Query("user", description="Message role (user/assistant/system)"),
+    db: AsyncSession = Depends(get_db)
+):
+    """Add a message to a conversation"""
+    try:
+        conversation_uuid = parse_conversation_id(conversation_id)
+    except ValueError as e:
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail=str(e)
+        )
+    
+    # Check if conversation exists
+    conv_stmt = select(Conversation).where(Conversation.id == conversation_uuid)
+    conv_result = await db.execute(conv_stmt)
+    conversation = conv_result.scalar_one_or_none()
+    
+    if not conversation:
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail="Conversation not found"
+        )
+    
+    # Add message using the service
+    chat_service = DatabaseChatService(db)
+    message = await chat_service.add_message(conversation_uuid, content, role)
+    
+    return MessageResponse(
+        id=str(message.id),
+        role=message.role,
+        content=message.content,
+        sequence_number=message.sequence_number,
+        created_at=message.created_at
+    )

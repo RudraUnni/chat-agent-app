@@ -141,12 +141,15 @@ async def get_conversation_history(conversation_id: str, limit: int = 20) -> Lis
             messages = result.scalars().all()
             
             # Return in chronological order, formatted for agent
-            return [
+            history = [
                 {"role": msg.role, "content": msg.content}
                 for msg in reversed(messages)
             ]
+            
+            logger.info(f"Retrieved {len(history)} messages from conversation {conversation_id}")
+            return history
         except Exception as e:
-            logger.error(f"Failed to retrieve conversation history: {e}")
+            logger.error(f"Failed to retrieve conversation history for {conversation_id}: {e}")
             return []
 
 @router.websocket("/chat")
@@ -281,16 +284,34 @@ async def websocket_chat_with_conversation(
                         # Store user message in database (with fallback if DB fails)
                         conversation_history = []
                         print(f"💾 Attempting to store message in database...")
+                        
+                        # First try to get existing history (even if storing fails)
                         try:
-                            await store_message(session.conversation_id, "user", user_message)
-                            print(f"💾 Message stored successfully")
-                            # Get conversation history
                             conversation_history = await get_conversation_history(session.conversation_id, limit=20)
                             print(f"📚 Retrieved {len(conversation_history)} messages from history")
                             logger.debug(f"Retrieved {len(conversation_history)} messages from history")
+                        except Exception as history_error:
+                            print(f"📚 Failed to retrieve history: {history_error}")
+                            logger.warning(f"Failed to retrieve conversation history: {history_error}")
+                        
+                        # Now try to store the new message
+                        try:
+                            await store_message(session.conversation_id, "user", user_message)
+                            print(f"💾 User message stored successfully")
+                            logger.info(f"Stored user message for conversation {session.conversation_id}")
                         except Exception as db_error:
-                            print(f"💾 Database operation failed: {db_error}")
-                            logger.error(f"Database operation failed, continuing without history: {db_error}")
+                            print(f"💾 Failed to store user message: {db_error}")
+                            logger.error(f"Database operation failed for user message: {db_error}")
+                            # Send warning to user but continue
+                            warning_msg = {
+                                "type": "warning",
+                                "content": "Message could not be saved to history, but processing will continue",
+                                "timestamp": datetime.now().isoformat()
+                            }
+                            try:
+                                await websocket.send_text(json.dumps(warning_msg))
+                            except:
+                                pass  # Don't let warning send failure stop processing
                         
                         # Get workflow
                         print(f"🔧 Getting workflow: {workflow_name}")
@@ -306,10 +327,16 @@ async def websocket_chat_with_conversation(
                             await websocket.send_text(json.dumps(error_response))
                             continue
                         
+                        # Update context with conversation history
+                        if conversation_history:
+                            session.context.history = conversation_history
+                            print(f"📚 Updated session context with {len(conversation_history)} history messages")
+                        
                         # Execute workflow with conversation history
                         print(f"🚀 Executing workflow with {len(conversation_history)} history messages")
                         input_data = {
                             'message': user_message,
+                            'query': user_message,  # Some workflows expect 'query'
                             'conversation_history': conversation_history,
                             **parameters
                         }
@@ -329,9 +356,20 @@ async def websocket_chat_with_conversation(
                             try:
                                 await store_message(session.conversation_id, "assistant", response_text)
                                 print(f"💾 Assistant response stored successfully")
+                                logger.info(f"Stored assistant response for conversation {session.conversation_id}")
                             except Exception as db_error:
                                 print(f"💾 Failed to store assistant response: {db_error}")
                                 logger.error(f"Failed to store assistant response: {db_error}")
+                                # Send warning to user but continue
+                                warning_msg = {
+                                    "type": "warning",
+                                    "content": "Assistant response could not be saved to history",
+                                    "timestamp": datetime.now().isoformat()
+                                }
+                                try:
+                                    await websocket.send_text(json.dumps(warning_msg))
+                                except:
+                                    pass  # Don't let warning send failure stop processing
                             
                             response = {
                                 "type": "assistant",
