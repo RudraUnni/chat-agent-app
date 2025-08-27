@@ -39,5 +39,9 @@ orchestrator = Agent(
 )
 
 
-async def orchestrate(input_text: str) -> str:
-    return await orchestrator.invoke(input_text)
+async def orchestrate(input_text: str, conversation_history: list = None) -> str:
+    """Orchestrate the conversation with full history context"""
+    if conversation_history is None:
+        conversation_history = []
+    
+    return await orchestrator.invoke(input_text, conversation_history=conversation_history)

@@ -27,10 +27,42 @@ class Agent(OpenAIAgent):
         _ensure_api_key()
         super().__init__(*args, **kwargs)
     
-    async def invoke(self, user_input: str, **kwargs) -> str:
-        """Async wrapper for OpenAI Agent execution"""
-        result = await OpenAIRunner.run(self, user_input)
+    async def invoke(self, user_input: str, conversation_history: list = None, **kwargs) -> str:
+        """Async wrapper for OpenAI Agent execution with conversation history"""
+        if conversation_history:
+            # Format conversation history for the agent
+            # The OpenAI Agents SDK expects a specific format for conversation history
+            # We'll pass the history as part of the user input context
+            history_context = self._format_conversation_history(conversation_history)
+            
+            # Combine history context with current user input
+            if history_context:
+                full_input = f"{history_context}\n\nCurrent message: {user_input}"
+            else:
+                full_input = user_input
+        else:
+            full_input = user_input
+            
+        result = await OpenAIRunner.run(self, full_input)
         return result.final_output
+    
+    def _format_conversation_history(self, conversation_history: list) -> str:
+        """Format conversation history for agent context"""
+        if not conversation_history:
+            return ""
+        
+        formatted_messages = []
+        for msg in conversation_history[:-1]:  # Exclude the current message (last one)
+            role = msg.get("role", "user")
+            content = msg.get("content", "")
+            if role == "user":
+                formatted_messages.append(f"User: {content}")
+            elif role == "assistant":
+                formatted_messages.append(f"Assistant: {content}")
+        
+        if formatted_messages:
+            return "Previous conversation:\n" + "\n".join(formatted_messages)
+        return ""
     
     def as_tool(self, name: str, description: str):
         """Convert agent to a tool for use by other agents"""

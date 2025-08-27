@@ -24,9 +24,15 @@ class PubMedResearchWorkflow(BaseWorkflow):
         if not user_input:
             return WorkflowResult(success=False, error="Missing 'query', 'text', or 'message'")
 
+        # Get conversation history from input_data
+        conversation_history = input_data.get("conversation_history", [])
+
         try:
             logger.debug(f"Orchestrating input: {user_input[:100]}...")
-            output = await orchestrate(user_input)
+            logger.debug(f"Conversation history length: {len(conversation_history)}")
+            
+            # Pass both current message and conversation history to orchestrator
+            output = await orchestrate(user_input, conversation_history)
             logger.debug(f"Orchestration complete, output length: {len(output)}")
             return WorkflowResult(success=True, data={"output": output})
         except Exception as exc:

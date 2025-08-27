@@ -3,6 +3,7 @@ from datetime import datetime
 import uuid
 
 from app.workflows.base import WorkflowContext
+from app.models.chat import ChatMessage
 
 
 class ChatSession:
@@ -13,6 +14,7 @@ class ChatSession:
         self.user_id = user_id
         self.created_at = datetime.now()
         self.last_activity = datetime.now()
+        self.messages: List[ChatMessage] = []
         self.context = WorkflowContext(
             session_id=self.session_id,
             user_id=user_id
@@ -23,6 +25,33 @@ class ChatSession:
         """Update last activity timestamp"""
         self.last_activity = datetime.now()
         self.message_count += 1
+    
+    def add_message(self, role: str, content: str) -> ChatMessage:
+        """Add a message to the conversation history"""
+        message = ChatMessage(
+            role=role,
+            content=content,
+            timestamp=datetime.now()
+        )
+        self.messages.append(message)
+        self.update_activity()
+        return message
+    
+    def add_user_message(self, content: str) -> ChatMessage:
+        """Add a user message to the conversation"""
+        return self.add_message("user", content)
+    
+    def add_assistant_message(self, content: str) -> ChatMessage:
+        """Add an assistant message to the conversation"""
+        return self.add_message("assistant", content)
+    
+    def get_conversation_history(self) -> List[ChatMessage]:
+        """Get the full conversation history"""
+        return self.messages.copy()
+    
+    def get_messages_for_agent(self) -> List[Dict[str, str]]:
+        """Get messages formatted for agent consumption (role + content)"""
+        return [{"role": msg.role, "content": msg.content} for msg in self.messages]
 
 
 class ChatManager:
