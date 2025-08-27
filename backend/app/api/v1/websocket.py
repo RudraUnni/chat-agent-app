@@ -43,7 +43,19 @@ async def websocket_chat_endpoint(
     websocket: WebSocket,
     session_id: Optional[str] = None
 ):
-    """WebSocket endpoint for real-time chat with workflows"""
+    """
+    WebSocket endpoint for real-time chat with workflows and conversation history.
+    
+    Now maintains full conversation history per session and provides complete
+    context to agents for coherent multi-turn conversations.
+    
+    Message format:
+    {
+        "content": "Your message here",
+        "workflow": "pubmed_research",
+        "parameters": {}
+    }
+    """
     
     # Get dependencies using the same pattern as REST endpoints
     from app.core.dependencies import get_workflow_registry, get_chat_manager
@@ -86,6 +98,11 @@ async def websocket_chat_endpoint(
                 
                 if user_message.strip():
                     logger.info(f"Processing: workflow={workflow_name}, message_length={len(user_message)}")
+                    
+                    # Store user message in session history
+                    session.add_user_message(user_message)
+                    logger.debug(f"Added user message to session {session_id}. Total messages: {len(session.messages)}")
+                    
                     # Get workflow
                     workflow = workflow_registry.get_workflow(workflow_name)
                     
@@ -98,17 +115,29 @@ async def websocket_chat_endpoint(
                         await manager.send_message(session_id, error_response)
                         continue
                     
-                    # Execute workflow
+                    # Prepare input data with conversation history
                     input_data = {
                         'message': user_message,
+                        'conversation_history': session.get_messages_for_agent(),
                         **parameters
                     }
+                    
+                    # Update context with conversation history
+                    session.context.history = [
+                        {"role": msg.role, "content": msg.content, "timestamp": msg.timestamp.isoformat() if msg.timestamp else None}
+                        for msg in session.get_conversation_history()
+                    ]
                     
                     result = await workflow.execute(input_data, session.context)
                     logger.debug(f"Workflow result: success={result.success}")
                     
                     if result.success:
                         response_text = extract_workflow_response(result, workflow_name)
+                        
+                        # Store assistant response in session history
+                        session.add_assistant_message(response_text)
+                        logger.debug(f"Added assistant response to session {session_id}. Total messages: {len(session.messages)}")
+                        
                         response = {
                             "type": "assistant",
                             "content": response_text,
@@ -117,6 +146,10 @@ async def websocket_chat_endpoint(
                         }
                     else:
                         error_message = format_workflow_error(result, workflow_name)
+                        
+                        # Store error as assistant message for context
+                        session.add_assistant_message(f"Error: {error_message}")
+                        
                         response = {
                             "type": "error",
                             "content": error_message,
@@ -137,5 +170,5 @@ async def websocket_chat_endpoint(
         logger.info(f"WebSocket disconnected: session_id={session_id}")
         manager.disconnect(session_id)
     except Exception as e:
-        manager.error(f"WebSocket error: session_id={session_id}, error={e}")
+        logger.error(f"WebSocket error: session_id={session_id}, error={e}")
         manager.disconnect(session_id)
