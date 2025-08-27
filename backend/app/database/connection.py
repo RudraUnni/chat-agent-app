@@ -36,11 +36,22 @@ async def get_db() -> AsyncGenerator[AsyncSession, None]:
 
 
 async def init_db():
-    """Initialize database tables"""
+    """Initialize database tables and seed with default data"""
     from app.database.models import Base
+    from app.database.seed import seed_database
     
+    # Create tables
     async with engine.begin() as conn:
         await conn.run_sync(Base.metadata.create_all)
+    
+    # Seed database with default user
+    async with AsyncSessionLocal() as session:
+        try:
+            await seed_database(session)
+            await session.commit()
+        except Exception as e:
+            await session.rollback()
+            raise
 
 
 async def close_db():

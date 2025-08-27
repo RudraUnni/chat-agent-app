@@ -96,3 +96,30 @@ class DatabaseChatService:
             .order_by(Message.sequence_number.asc())
         )
         return result.scalars().all()
+    
+    async def list_users(self) -> List[User]:
+        """List all users"""
+        try:
+            result = await self.db.execute(select(User).order_by(User.created_at.desc()))
+            return result.scalars().all()
+        except SQLAlchemyError as e:
+            logger.error(f"Database error during user listing: {e}")
+            raise DatabaseError("Failed to list users", error_code="DB_READ_ERROR")
+    
+    async def get_user_by_username(self, username: str) -> Optional[User]:
+        """Get a user by username"""
+        try:
+            result = await self.db.execute(select(User).where(User.username == username))
+            return result.scalar_one_or_none()
+        except SQLAlchemyError as e:
+            logger.error(f"Database error during user lookup by username: {e}")
+            raise DatabaseError("Failed to retrieve user", error_code="DB_READ_ERROR")
+    
+    async def get_user_by_email(self, email: str) -> Optional[User]:
+        """Get a user by email"""
+        try:
+            result = await self.db.execute(select(User).where(User.email == email))
+            return result.scalar_one_or_none()
+        except SQLAlchemyError as e:
+            logger.error(f"Database error during user lookup by email: {e}")
+            raise DatabaseError("Failed to retrieve user", error_code="DB_READ_ERROR")

@@ -40,6 +40,11 @@ class Settings(BaseSettings):
     pubmed_max_results: int = 5
     pubmed_timeout: int = 15
     
+    # Default User Configuration (for testing)
+    default_user_username: str = "test_user"
+    default_user_email: str = "test@example.com"
+    create_default_user: bool = True
+    
     @field_validator('pubmed_timeout', mode='before')
     @classmethod
     def parse_pubmed_timeout(cls, v):
