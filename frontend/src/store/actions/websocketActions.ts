@@ -21,7 +21,11 @@ export const sendWebSocketMessage = (message: WsMessage) => ({
 export const sendChatMessage = createAsyncThunk(
   'chat/sendMessage',
   async (content: string, { dispatch }) => {
-    if (!content.trim()) return
+    console.log('💬 sendChatMessage called with content:', content)
+    if (!content.trim()) {
+      console.log('❌ Empty content, not sending message')
+      return
+    }
 
     // Add user message immediately
     const userMessage: ChatMessage = {
@@ -32,6 +36,7 @@ export const sendChatMessage = createAsyncThunk(
       status: 'sending'
     }
     
+    console.log('➕ Adding user message to chat:', userMessage)
     dispatch(addMessage(userMessage))
 
     // Send via WebSocket
@@ -41,6 +46,7 @@ export const sendChatMessage = createAsyncThunk(
       timestamp: new Date().toISOString()
     }
     
+    console.log('🚀 Dispatching WebSocket message:', wsMessage)
     dispatch(sendWebSocketMessage(wsMessage))
     
     // Update message status and set typing
