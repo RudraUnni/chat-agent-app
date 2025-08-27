@@ -64,7 +64,9 @@ export const websocketMiddleware: Middleware<Record<string, never>, RootState> =
 
     ws.onmessage = (event) => {
       try {
+        console.log('📨 WebSocket message received:', event.data)
         const data: WsMessage = JSON.parse(event.data)
+        console.log('📨 Parsed WebSocket message:', data)
         
         // Log system messages but don't process them as chat messages
         if (data.type === 'system') {
@@ -73,6 +75,12 @@ export const websocketMiddleware: Middleware<Record<string, never>, RootState> =
         }
         
         // Handle all other message types
+        console.log('📨 Dispatching handleIncomingMessage:', {
+          type: data.type,
+          content: data.content?.substring(0, 100) + '...',
+          timestampMs: typeof data.timestamp === 'string' ? Date.parse(data.timestamp) : undefined,
+          isStreamChunk: data.type === 'stream_chunk' || data.type === 'assistant_chunk'
+        })
         store.dispatch(handleIncomingMessage({
           type: data.type,
           content: data.content,
