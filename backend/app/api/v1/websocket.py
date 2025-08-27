@@ -13,6 +13,8 @@ from app.database.connection import AsyncSessionLocal
 from app.database.models import Message, User
 from sqlalchemy.future import select
 from sqlalchemy import func
+from uuid import UUID
+import hashlib
 
 settings = get_settings()
 logger = logging.getLogger(__name__)
@@ -41,6 +43,25 @@ class ConnectionManager:
                 raise
 
 manager = ConnectionManager()
+
+
+def parse_conversation_id_for_websocket(conversation_id: str) -> str:
+    """Parse conversation ID for WebSocket - convert custom formats to UUID strings"""
+    try:
+        # Try to parse as UUID first
+        uuid_obj = UUID(conversation_id)
+        return str(uuid_obj)
+    except ValueError:
+        # If not UUID, check if it's a custom format like conv_timestamp_random
+        if conversation_id.startswith('conv_'):
+            # Generate a deterministic UUID from the string
+            namespace = UUID('6ba7b810-9dad-11d1-80b4-00c04fd430c8')  # Standard namespace UUID
+            uuid_obj = UUID(bytes=hashlib.md5(conversation_id.encode()).digest())
+            return str(uuid_obj)
+        else:
+            # For other formats, generate a UUID from the string
+            uuid_obj = UUID(bytes=hashlib.md5(conversation_id.encode()).digest())
+            return str(uuid_obj)
 
 
 async def get_or_create_default_test_user() -> str:
@@ -78,16 +99,19 @@ async def store_message(conversation_id: str, role: str, content: str) -> None:
     """Store a message in the database"""
     async with AsyncSessionLocal() as db:
         try:
+            # Convert conversation_id to UUID
+            conversation_uuid = UUID(conversation_id)
+            
             # Get next sequence number
             stmt = select(func.coalesce(func.max(Message.sequence_number), 0) + 1).where(
-                Message.conversation_id == conversation_id
+                Message.conversation_id == conversation_uuid
             )
             result = await db.execute(stmt)
             sequence_number = result.scalar()
             
             # Create and store message
             message = Message(
-                conversation_id=conversation_id,
+                conversation_id=conversation_uuid,
                 role=role,
                 content=content,
                 sequence_number=sequence_number
@@ -104,9 +128,12 @@ async def get_conversation_history(conversation_id: str, limit: int = 20) -> Lis
     """Retrieve conversation history formatted for agent"""
     async with AsyncSessionLocal() as db:
         try:
+            # Convert conversation_id to UUID
+            conversation_uuid = UUID(conversation_id)
+            
             stmt = (
                 select(Message)
-                .where(Message.conversation_id == conversation_id)
+                .where(Message.conversation_id == conversation_uuid)
                 .order_by(Message.sequence_number.desc())
                 .limit(limit)
             )
@@ -129,6 +156,7 @@ async def websocket_chat_endpoint(
     user_id: Optional[str] = None
 ):
     """WebSocket endpoint for real-time chat with workflows"""
+    logger.info(f"🚀 WebSocket endpoint /chat called with session_id={session_id}, user_id={user_id}")
     await websocket_chat_with_conversation(websocket, None, session_id, user_id)
 
 
@@ -151,6 +179,8 @@ async def websocket_chat_with_conversation(
 ):
     """WebSocket endpoint for real-time chat with workflows"""
     
+    logger.info(f"🔥 ENTERING websocket_chat_with_conversation: conversation_id={conversation_id}, session_id={session_id}, user_id={user_id}")
+    
     # CRITICAL: Accept WebSocket connection FIRST before any other operations
     logger.info(f"WebSocket connection attempt: session_id={session_id}")
     await websocket.accept()
@@ -165,6 +195,10 @@ async def websocket_chat_with_conversation(
     if not conversation_id:
         conversation_id = session_id
         logger.info(f"Using session_id as conversation_id: {conversation_id}")
+    else:
+        # Parse and normalize conversation_id to UUID format
+        conversation_id = parse_conversation_id_for_websocket(conversation_id)
+        logger.info(f"Parsed conversation_id to UUID format: {conversation_id}")
     
     logger.info(f"WebSocket params: session_id={session_id}, conversation_id={conversation_id}, user_id={user_id}")
     

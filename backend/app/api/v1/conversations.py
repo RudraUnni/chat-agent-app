@@ -49,6 +49,26 @@ class ConversationWithMessagesResponse(BaseModel):
         from_attributes = True
 
 
+def parse_conversation_id(conversation_id: str) -> UUID:
+    """Parse conversation ID - handle both UUID and custom formats"""
+    try:
+        # Try to parse as UUID first
+        return UUID(conversation_id)
+    except ValueError:
+        # If not UUID, check if it's a custom format like conv_timestamp_random
+        if conversation_id.startswith('conv_'):
+            # For custom format, we need to either:
+            # 1. Convert to a deterministic UUID, or 
+            # 2. Store mapping in database, or
+            # 3. Generate a new UUID and return it
+            # For now, let's generate a deterministic UUID from the string
+            import hashlib
+            namespace = UUID('6ba7b810-9dad-11d1-80b4-00c04fd430c8')  # Standard namespace UUID
+            return UUID(bytes=hashlib.md5(conversation_id.encode()).digest())
+        else:
+            raise ValueError(f"Invalid conversation ID format: {conversation_id}")
+
+
 @router.get("/{conversation_id}/messages", response_model=List[MessageResponse])
 async def get_conversation_messages(
     conversation_id: str,
@@ -58,11 +78,11 @@ async def get_conversation_messages(
 ):
     """Get messages for a specific conversation"""
     try:
-        conversation_uuid = UUID(conversation_id)
-    except ValueError:
+        conversation_uuid = parse_conversation_id(conversation_id)
+    except ValueError as e:
         raise HTTPException(
             status_code=status.HTTP_400_BAD_REQUEST,
-            detail="Invalid conversation ID format"
+            detail=str(e)
         )
     
     # Check if conversation exists
@@ -109,11 +129,11 @@ async def get_conversation_with_messages(
 ):
     """Get conversation details with optional messages"""
     try:
-        conversation_uuid = UUID(conversation_id)
-    except ValueError:
+        conversation_uuid = parse_conversation_id(conversation_id)
+    except ValueError as e:
         raise HTTPException(
             status_code=status.HTTP_400_BAD_REQUEST,
-            detail="Invalid conversation ID format"
+            detail=str(e)
         )
     
     # Get conversation with messages
@@ -230,11 +250,11 @@ async def delete_conversation(
 ):
     """Delete a conversation and all its messages"""
     try:
-        conversation_uuid = UUID(conversation_id)
-    except ValueError:
+        conversation_uuid = parse_conversation_id(conversation_id)
+    except ValueError as e:
         raise HTTPException(
             status_code=status.HTTP_400_BAD_REQUEST,
-            detail="Invalid conversation ID format"
+            detail=str(e)
         )
     
     # Get conversation
@@ -263,11 +283,11 @@ async def update_conversation_title(
 ):
     """Update conversation title"""
     try:
-        conversation_uuid = UUID(conversation_id)
-    except ValueError:
+        conversation_uuid = parse_conversation_id(conversation_id)
+    except ValueError as e:
         raise HTTPException(
             status_code=status.HTTP_400_BAD_REQUEST,
-            detail="Invalid conversation ID format"
+            detail=str(e)
         )
     
     # Get conversation
