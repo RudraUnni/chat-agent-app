@@ -274,23 +274,30 @@ async def websocket_chat_with_conversation(
                 parameters = message_data.get("parameters", {})
                 
                 if user_message.strip():
+                    print(f"💬 Processing message: workflow={workflow_name}, message_length={len(user_message)}")
                     logger.info(f"Processing: workflow={workflow_name}, message_length={len(user_message)}")
                     
                     try:
                         # Store user message in database (with fallback if DB fails)
                         conversation_history = []
+                        print(f"💾 Attempting to store message in database...")
                         try:
                             await store_message(session.conversation_id, "user", user_message)
+                            print(f"💾 Message stored successfully")
                             # Get conversation history
                             conversation_history = await get_conversation_history(session.conversation_id, limit=20)
+                            print(f"📚 Retrieved {len(conversation_history)} messages from history")
                             logger.debug(f"Retrieved {len(conversation_history)} messages from history")
                         except Exception as db_error:
+                            print(f"💾 Database operation failed: {db_error}")
                             logger.error(f"Database operation failed, continuing without history: {db_error}")
                         
                         # Get workflow
+                        print(f"🔧 Getting workflow: {workflow_name}")
                         workflow = workflow_registry.get_workflow(workflow_name)
                         
                         if not workflow:
+                            print(f"❌ Workflow '{workflow_name}' not found")
                             error_response = {
                                 "type": "error",
                                 "content": f"Workflow '{workflow_name}' not found",
@@ -300,22 +307,30 @@ async def websocket_chat_with_conversation(
                             continue
                         
                         # Execute workflow with conversation history
+                        print(f"🚀 Executing workflow with {len(conversation_history)} history messages")
                         input_data = {
                             'message': user_message,
                             'conversation_history': conversation_history,
                             **parameters
                         }
                         
+                        print(f"🚀 About to execute workflow...")
                         result = await workflow.execute(input_data, session.context)
+                        print(f"🚀 Workflow executed: success={result.success}")
                         logger.debug(f"Workflow result: success={result.success}")
                         
                         if result.success:
+                            print(f"✅ Workflow success, extracting response...")
                             response_text = extract_workflow_response(result, workflow_name)
+                            print(f"📝 Response text length: {len(response_text)}")
                             
                             # Store assistant response in database (with fallback)
+                            print(f"💾 Storing assistant response...")
                             try:
                                 await store_message(session.conversation_id, "assistant", response_text)
+                                print(f"💾 Assistant response stored successfully")
                             except Exception as db_error:
+                                print(f"💾 Failed to store assistant response: {db_error}")
                                 logger.error(f"Failed to store assistant response: {db_error}")
                             
                             response = {
@@ -324,6 +339,7 @@ async def websocket_chat_with_conversation(
                                 "workflow": workflow_name,
                                 "timestamp": datetime.now().isoformat()
                             }
+                            print(f"📤 Sending response to frontend: {len(response['content'])} chars")
                         else:
                             error_message = format_workflow_error(result, workflow_name)
                             response = {
@@ -332,7 +348,9 @@ async def websocket_chat_with_conversation(
                                 "timestamp": datetime.now().isoformat()
                             }
                         
+                        print(f"📤 About to send WebSocket response...")
                         await websocket.send_text(json.dumps(response))
+                        print(f"✅ WebSocket response sent successfully")
                         
                     except Exception as e:
                         logger.error(f"Error processing message: {e}")
