@@ -38,8 +38,13 @@ const ChatContainer = () => {
   const [isInitialized, setIsInitialized] = useState(false)
 
   const handleSendMessage = (content: string) => {
-    if (!content.trim() || !isConnected) return
+    console.log('🎯 handleSendMessage called with:', { content, isConnected })
+    if (!content.trim() || !isConnected) {
+      console.log('❌ Not sending message - empty content or not connected')
+      return
+    }
 
+    console.log('✅ Dispatching sendChatMessage')
     dispatch(sendChatMessage(content) as any)
   }
 
