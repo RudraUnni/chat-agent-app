@@ -53,3 +53,10 @@ app.include_router(api_router, prefix="/api/v1")
 # Include WebSocket directly (not under API prefix)
 from app.api.v1.websocket import router as websocket_router
 app.include_router(websocket_router, prefix="/ws")
+
+# Debug: Print all registered routes
+print("🔍 REGISTERED ROUTES:")
+for route in app.routes:
+    if hasattr(route, 'path'):
+        print(f"   {route.methods if hasattr(route, 'methods') else 'WS'} {route.path}")
+print("🔍 END ROUTES")

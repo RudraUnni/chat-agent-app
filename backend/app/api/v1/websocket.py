@@ -156,6 +156,7 @@ async def websocket_chat_endpoint(
     user_id: Optional[str] = None
 ):
     """WebSocket endpoint for real-time chat with workflows"""
+    print(f"🚀🚀🚀 IMMEDIATE: WebSocket /chat endpoint HIT! session_id={session_id}, user_id={user_id}")
     logger.info(f"🚀 WebSocket endpoint /chat called with session_id={session_id}, user_id={user_id}")
     await websocket_chat_with_conversation(websocket, None, session_id, user_id)
 
@@ -168,6 +169,7 @@ async def websocket_chat_endpoint_with_conversation(
     user_id: Optional[str] = None
 ):
     """WebSocket endpoint for real-time chat with specific conversation"""
+    print(f"🎯🎯🎯 IMMEDIATE: WebSocket /chat/{conversation_id} endpoint HIT! session_id={session_id}, user_id={user_id}")
     await websocket_chat_with_conversation(websocket, conversation_id, session_id, user_id)
 
 
@@ -179,11 +181,14 @@ async def websocket_chat_with_conversation(
 ):
     """WebSocket endpoint for real-time chat with workflows"""
     
+    print(f"💥💥💥 IMMEDIATE: ENTERING websocket_chat_with_conversation: conversation_id={conversation_id}, session_id={session_id}, user_id={user_id}")
     logger.info(f"🔥 ENTERING websocket_chat_with_conversation: conversation_id={conversation_id}, session_id={session_id}, user_id={user_id}")
     
     # CRITICAL: Accept WebSocket connection FIRST before any other operations
+    print(f"💥 ABOUT TO ACCEPT WebSocket connection: session_id={session_id}")
     logger.info(f"WebSocket connection attempt: session_id={session_id}")
     await websocket.accept()
+    print(f"💥 WebSocket ACCEPTED successfully: session_id={session_id}")
     logger.info(f"WebSocket handshake completed successfully: session_id={session_id}")
     
     # Generate session_id if not provided
@@ -258,10 +263,12 @@ async def websocket_chat_with_conversation(
         while True:
             # Receive message from client
             data = await websocket.receive_text()
+            print(f"💬💬💬 RECEIVED MESSAGE: session_id={session_id}, data={data[:100]}...")
             logger.debug(f"Received message: session_id={session_id}, data={data[:100]}...")
             
             try:
                 message_data = json.loads(data)
+                print(f"💬 PARSED MESSAGE: {message_data}")
                 user_message = message_data.get("content", "")
                 workflow_name = message_data.get("workflow", "pubmed_research")  # Default to Medical Assistant
                 parameters = message_data.get("parameters", {})
