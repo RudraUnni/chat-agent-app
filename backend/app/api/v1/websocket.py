@@ -349,6 +349,8 @@ async def websocket_chat_with_conversation(
                             }
                         
                         print(f"📤 About to send WebSocket response...")
+                        print(f"📤 WebSocket object: {websocket}")
+                        print(f"📤 Session conversation_id: {session.conversation_id}")
                         await websocket.send_text(json.dumps(response))
                         print(f"✅ WebSocket response sent successfully")
                         
