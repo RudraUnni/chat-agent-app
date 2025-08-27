@@ -59,20 +59,39 @@ const chatSlice = createSlice({
     // Action for handling incoming WebSocket messages
     handleIncomingMessage: (state, action: PayloadAction<{ type: string; content?: string; timestampMs?: number }>) => {
       const { type, content, timestampMs } = action.payload
+      console.log('🔄 handleIncomingMessage Redux action:', { type, content: content?.substring(0, 50) + '...', timestampMs })
+      console.log('🔄 Current state:', { 
+        messageCount: state.messages.length, 
+        streamingMessageId: state.streamingMessageId,
+        isTyping: state.isTyping 
+      })
       
       switch (type) {
         case 'assistant':
         case 'message':
           if (state.streamingMessageId) {
+            console.log('🔄 Updating streaming message with ID:', state.streamingMessageId)
             // Update existing streaming message
             const message = state.messages.find(msg => msg.id === state.streamingMessageId)
             if (message) {
+              console.log('🔄 Found streaming message, updating content')
               message.content = content || ''
               message.status = 'sent'
+            } else {
+              console.log('❌ Streaming message not found, adding new message instead')
+              // Fallback: add new message
+              state.messages.push({
+                id: Date.now().toString(),
+                content: content || '',
+                role: 'assistant',
+                timestamp: typeof timestampMs === 'number' ? timestampMs : Date.now(),
+                status: 'sent'
+              })
             }
             state.streamingMessageId = null
             state.isTyping = false
           } else {
+            console.log('🔄 Adding new assistant message')
             // Add new message
             state.messages.push({
               id: Date.now().toString(),
@@ -83,6 +102,7 @@ const chatSlice = createSlice({
             })
             state.isTyping = false
           }
+          console.log('🔄 After processing - message count:', state.messages.length)
           break
           
         case 'typing':
