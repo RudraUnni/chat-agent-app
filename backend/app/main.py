@@ -14,8 +14,17 @@ settings = get_settings()
 async def lifespan(app: FastAPI):
     """Application lifespan manager"""
     # Startup
+    print("🚀 STARTING MINIMALISTIC HISTORY PERSISTENCE BACKEND")
+    print("=" * 55)
+    print(f"📋 Default user: {settings.default_user_username}")
+    print(f"📧 Default email: {settings.default_user_email}")
+    print(f"🗃️ Database: {settings.database_name}")
+    print("=" * 55)
+    
     await init_db()
-    print("Database initialized")
+    print("✅ Database initialized with default user")
+    print("🎯 Ready for history persistence testing!")
+    print("💡 Test: curl http://localhost:8000/api/v1/users/default")
     
     yield
     
@@ -41,7 +50,16 @@ app.add_middleware(
 
 @app.get("/")
 async def root():
-    return {"message": "Chat Agent API is running!"}
+    return {
+        "message": "Minimalistic History Persistence Backend", 
+        "default_user": settings.default_user_username,
+        "features": ["user_management", "history_persistence", "websocket_chat"],
+        "endpoints": {
+            "default_user": "/api/v1/users/default",
+            "list_users": "/api/v1/users/",
+            "websocket": "/ws/chat?user_id=<user_id>"
+        }
+    }
 
 @app.get("/health")
 async def health_check():
@@ -54,9 +72,15 @@ app.include_router(api_router, prefix="/api/v1")
 from app.api.v1.websocket import router as websocket_router
 app.include_router(websocket_router, prefix="/ws")
 
-# Debug: Print all registered routes
-print("🔍 REGISTERED ROUTES:")
-for route in app.routes:
-    if hasattr(route, 'path'):
-        print(f"   {route.methods if hasattr(route, 'methods') else 'WS'} {route.path}")
-print("🔍 END ROUTES")
+# Show available endpoints for minimalistic testing
+print("🔗 MINIMALISTIC HISTORY PERSISTENCE ENDPOINTS:")
+key_routes = [
+    ("GET", "/", "Root - shows backend info"),
+    ("GET", "/api/v1/users/default", "Get default test user"),
+    ("GET", "/api/v1/users/", "List all users"), 
+    ("POST", "/api/v1/users/dummy", "Create dummy user"),
+    ("WS", "/ws/chat", "WebSocket chat with history")
+]
+for method, path, desc in key_routes:
+    print(f"   {method:4} {path:25} - {desc}")
+print("🎯 Start testing with: curl http://localhost:8000/api/v1/users/default")
