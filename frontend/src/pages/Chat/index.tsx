@@ -23,21 +23,17 @@ const Chat = () => {
               <ThreadPrimitive.Viewport className="flex-1 overflow-y-auto px-4 py-4 space-y-4">
                 <ThreadPrimitive.Messages
                   components={{
-                    UserMessage: ({ message }) => (
+                    UserMessage: () => (
                       <div className="flex justify-end">
                         <div className="max-w-xs lg:max-w-2xl px-4 py-2 bg-blue-600 text-white rounded-lg">
-                          <MessagePrimitive.Root message={message}>
-                            <MessagePrimitive.Content />
-                          </MessagePrimitive.Root>
+                          <MessagePrimitive.Content />
                         </div>
                       </div>
                     ),
-                    AssistantMessage: ({ message }) => (
+                    AssistantMessage: () => (
                       <div className="flex justify-start">
                         <div className="max-w-xs lg:max-w-2xl px-4 py-2 bg-gray-200 dark:bg-gray-700 text-gray-900 dark:text-white rounded-lg">
-                          <MessagePrimitive.Root message={message}>
-                            <MessagePrimitive.Content />
-                          </MessagePrimitive.Root>
+                          <MessagePrimitive.Content />
                         </div>
                       </div>
                     ),
@@ -62,7 +58,8 @@ const Chat = () => {
                       autoFocus
                       className="flex-1 p-3 border border-gray-300 dark:border-gray-600 rounded-lg resize-none focus:outline-none focus:ring-2 focus:ring-blue-500 dark:bg-gray-800 dark:text-white"
                       placeholder="Type your message here... (Press Enter to send, Shift+Enter for new line)"
-                      style={{ minHeight: '44px', maxHeight: '200px' }}
+                      rows={1}
+                      maxRows={6}
                     />
                     <ComposerPrimitive.Send className="px-4 py-2 bg-blue-600 hover:bg-blue-700 disabled:bg-gray-400 text-white rounded-lg transition-colors">
                       Send
