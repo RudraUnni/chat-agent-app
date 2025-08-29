@@ -12,6 +12,13 @@ python-multipart>=0.0.9
 anyio>=4.5.0
 pydantic>=2.10.0,<3.0.0
 
+# Authentication dependencies
+PyJWT==2.8.0
+python-jose[cryptography]==3.3.0
+
+# Security dependencies for Open WebUI v0.6.5
+bleach==6.0.0
+
 # Database dependencies - using newer versions compatible with Python 3.13
 sqlalchemy[asyncio]==2.0.36
 asyncpg==0.30.0

@@ -1,0 +1,84 @@
+{
+  "openwebui_config": {
+    "version": "0.6.5",
+    "medical_integration": {
+      "enabled": true,
+      "backend_api": "http://host.docker.internal:8000/api/v1",
+      "medical_models": [
+        {
+          "name": "Medical Assistant",
+          "id": "medical-assistant", 
+          "api_endpoint": "/openwebui/chat/completions",
+          "capabilities": ["chat", "streaming", "pubmed_search"]
+        },
+        {
+          "name": "PubMed Research",
+          "id": "pubmed-research",
+          "api_endpoint": "/openwebui/chat/completions", 
+          "capabilities": ["chat", "streaming", "literature_search"]
+        },
+        {
+          "name": "Medical Analysis",
+          "id": "medical-analysis",
+          "api_endpoint": "/openwebui/chat/completions",
+          "capabilities": ["chat", "streaming", "case_analysis"]
+        }
+      ]
+    },
+    "security": {
+      "signup_enabled": false,
+      "auth_required": true,
+      "session_timeout": 3600,
+      "rate_limiting": {
+        "enabled": true,
+        "requests_per_minute": 60
+      }
+    },
+    "ui_customization": {
+      "title": "Medical AI Assistant",
+      "subtitle": "Evidence-based medical consultation and research",
+      "theme": "medical",
+      "default_model": "medical-assistant",
+      "welcome_message": "Welcome to the Medical AI Assistant! I can help you with:\n\n🔬 Medical research and literature review\n📊 Clinical case analysis\n💊 Drug information and interactions\n📋 Diagnostic workups\n📚 Evidence-based treatment guidelines\n\nSelect a medical model and start your consultation!"
+    },
+    "features": {
+      "voice_input": true,
+      "file_upload": true,
+      "markdown_support": true,
+      "latex_support": true,
+      "citation_support": true
+    }
+  },
+  "startup_checklist": [
+    {
+      "step": 1,
+      "description": "Start Docker services",
+      "command": "./start-medical-ai.sh",
+      "verification": "Check http://localhost:3000/health"
+    },
+    {
+      "step": 2, 
+      "description": "Start Medical Assistant backend",
+      "command": "cd backend && python -m app.main",
+      "verification": "Check http://localhost:8000/health"
+    },
+    {
+      "step": 3,
+      "description": "Start React frontend",
+      "command": "cd frontend && npm run dev", 
+      "verification": "Check http://localhost:5173"
+    },
+    {
+      "step": 4,
+      "description": "Configure Open WebUI models",
+      "action": "Add models via Open WebUI admin interface",
+      "url": "http://localhost:3000/admin/models"
+    },
+    {
+      "step": 5,
+      "description": "Create demo users",
+      "endpoint": "POST /api/v1/auth/create_demo_users",
+      "credentials": "demo_admin:demo_password, demo_doctor:demo_password"
+    }
+  ]
+}

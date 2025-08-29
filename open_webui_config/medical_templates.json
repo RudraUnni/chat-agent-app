@@ -1,0 +1,68 @@
+{
+  "medical_templates": [
+    {
+      "id": "clinical_consultation",
+      "title": "Clinical Consultation",
+      "description": "Template for clinical case consultation and analysis",
+      "template": "I need a clinical consultation regarding:\n\n**Patient Information:**\n- Age: [AGE]\n- Gender: [GENDER]\n- Chief Complaint: [CHIEF_COMPLAINT]\n\n**Clinical Presentation:**\n[CLINICAL_PRESENTATION]\n\n**Relevant History:**\n[MEDICAL_HISTORY]\n\n**Current Medications:**\n[MEDICATIONS]\n\n**Questions:**\n1. What are the potential differential diagnoses?\n2. What additional tests would you recommend?\n3. What are the evidence-based treatment options?\n\nPlease provide citations from recent literature.",
+      "category": "clinical",
+      "model": "medical-assistant"
+    },
+    {
+      "id": "literature_review",
+      "title": "Medical Literature Review",
+      "description": "Template for comprehensive literature review requests",
+      "template": "Please conduct a comprehensive literature review on:\n\n**Topic:** [RESEARCH_TOPIC]\n\n**Specific Focus Areas:**\n- [FOCUS_AREA_1]\n- [FOCUS_AREA_2]\n- [FOCUS_AREA_3]\n\n**Search Parameters:**\n- Time frame: [TIME_FRAME]\n- Study types: [STUDY_TYPES]\n- Population: [POPULATION]\n\n**Questions to Address:**\n1. What is the current evidence base?\n2. What are the key findings and consensus?\n3. What are the methodological limitations?\n4. What gaps exist in current research?\n5. What are the clinical implications?\n\nPlease search PubMed and provide a systematic analysis with citations.",
+      "category": "research",
+      "model": "pubmed-research"
+    },
+    {
+      "id": "drug_interaction_check",
+      "title": "Drug Interaction Analysis",
+      "description": "Template for comprehensive drug interaction and safety analysis",
+      "template": "Please analyze the following medication regimen for interactions and safety:\n\n**Current Medications:**\n[MEDICATION_LIST]\n\n**Patient Factors:**\n- Age: [AGE]\n- Weight: [WEIGHT]\n- Kidney function: [RENAL_FUNCTION]\n- Liver function: [HEPATIC_FUNCTION]\n- Allergies: [ALLERGIES]\n\n**Analysis Needed:**\n1. Drug-drug interactions\n2. Drug-disease interactions\n3. Dosing recommendations\n4. Monitoring requirements\n5. Alternative options if contraindicated\n\nPlease provide evidence-based recommendations with literature support.",
+      "category": "pharmacology",
+      "model": "medical-analysis"
+    },
+    {
+      "id": "diagnostic_workup",
+      "title": "Diagnostic Workup",
+      "description": "Template for comprehensive diagnostic planning",
+      "template": "Please help develop a diagnostic workup for:\n\n**Clinical Scenario:**\n[CLINICAL_SCENARIO]\n\n**Symptoms/Signs:**\n[SYMPTOMS_SIGNS]\n\n**Initial Assessment:**\n[INITIAL_ASSESSMENT]\n\n**Diagnostic Questions:**\n1. What is the most likely diagnosis?\n2. What are the key differential diagnoses?\n3. What diagnostic tests are indicated?\n4. What is the diagnostic algorithm?\n5. What are the evidence-based guidelines?\n\nPlease prioritize tests based on clinical utility and cost-effectiveness.",
+      "category": "diagnosis",
+      "model": "medical-assistant"
+    },
+    {
+      "id": "treatment_guidelines",
+      "title": "Treatment Guidelines Review",
+      "description": "Template for evidence-based treatment guideline analysis",
+      "template": "Please review current treatment guidelines for:\n\n**Condition:** [CONDITION]\n\n**Patient Characteristics:**\n[PATIENT_CHARACTERISTICS]\n\n**Specific Considerations:**\n[CONSIDERATIONS]\n\n**Guideline Review:**\n1. Latest professional society guidelines\n2. Evidence levels and recommendations\n3. Treatment algorithms\n4. Monitoring protocols\n5. Special populations considerations\n\nPlease compare guidelines from major organizations and highlight any discrepancies.",
+      "category": "treatment",
+      "model": "pubmed-research"
+    },
+    {
+      "id": "case_presentation",
+      "title": "Medical Case Presentation",
+      "description": "Template for structured medical case presentation",
+      "template": "**CASE PRESENTATION**\n\n**Chief Complaint:**\n[CHIEF_COMPLAINT]\n\n**History of Present Illness:**\n[HPI]\n\n**Past Medical History:**\n[PMH]\n\n**Medications:**\n[MEDICATIONS]\n\n**Physical Examination:**\n[PHYSICAL_EXAM]\n\n**Laboratory/Imaging:**\n[LAB_IMAGING]\n\n**Assessment and Plan:**\n[ASSESSMENT_PLAN]\n\n**Questions for Discussion:**\n1. [QUESTION_1]\n2. [QUESTION_2]\n3. [QUESTION_3]\n\nPlease provide evidence-based analysis and recommendations.",
+      "category": "education",
+      "model": "medical-assistant"
+    },
+    {
+      "id": "patient_education",
+      "title": "Patient Education Material",
+      "description": "Template for creating patient education content",
+      "template": "Please create patient education material about:\n\n**Topic:** [MEDICAL_TOPIC]\n\n**Target Audience:**\n- Education level: [EDUCATION_LEVEL]\n- Age group: [AGE_GROUP]\n- Language preference: [LANGUAGE]\n\n**Content Requirements:**\n1. Simple explanation of condition\n2. Symptoms to monitor\n3. Treatment options and expectations\n4. Lifestyle modifications\n5. When to seek medical attention\n6. Reliable resources for more information\n\nPlease use accessible language while maintaining medical accuracy. Include visual aids suggestions if appropriate.",
+      "category": "education",
+      "model": "medical-assistant"
+    },
+    {
+      "id": "research_proposal",
+      "title": "Research Proposal Development",
+      "description": "Template for medical research proposal development",
+      "template": "Please help develop a research proposal for:\n\n**Research Question:**\n[RESEARCH_QUESTION]\n\n**Background:**\n[BACKGROUND_CONTEXT]\n\n**Proposal Elements Needed:**\n1. Literature review and gap analysis\n2. Study design recommendations\n3. Primary and secondary endpoints\n4. Sample size considerations\n5. Statistical analysis plan\n6. Potential limitations and mitigation strategies\n\nPlease provide evidence-based recommendations and cite relevant methodology papers.",
+      "category": "research",
+      "model": "pubmed-research"
+    }
+  ]
+}

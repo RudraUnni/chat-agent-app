@@ -1,0 +1,49 @@
+{
+  "version": "0.6.5",
+  "medical_assistant_integration": true,
+  "security": {
+    "enable_signup": false,
+    "default_user_role": "user",
+    "enable_oauth": false,
+    "session_timeout": 3600
+  },
+  "ui": {
+    "title": "Medical Assistant AI",
+    "description": "AI-powered medical research and consultation interface",
+    "theme": "medical",
+    "branding": {
+      "name": "Medical Assistant",
+      "subtitle": "Evidence-based AI medical consultation"
+    }
+  },
+  "models": {
+    "default_model": "gpt-4",
+    "available_models": [
+      "gpt-4",
+      "gpt-3.5-turbo",
+      "claude-3-sonnet",
+      "local-medical-model"
+    ]
+  },
+  "integrations": {
+    "pubmed": {
+      "enabled": true,
+      "api_endpoint": "http://medical_assistant_api:8000/api/pubmed",
+      "max_results": 10
+    },
+    "medical_backend": {
+      "enabled": true,
+      "api_endpoint": "http://medical_assistant_api:8000/api",
+      "timeout": 30
+    }
+  },
+  "features": {
+    "voice": {
+      "enabled": true,
+      "vad_enabled": true
+    },
+    "medical_templates": true,
+    "pubmed_search": true,
+    "evidence_synthesis": true
+  }
+}

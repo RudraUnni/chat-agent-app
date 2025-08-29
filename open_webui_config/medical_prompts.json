@@ -1,0 +1,34 @@
+{
+  "medical_prompts": [
+    {
+      "title": "Medical Research Query",
+      "content": "You are a medical research assistant with access to PubMed database. Please provide evidence-based information about: {{QUERY}}.\n\nPlease:\n1. Search relevant medical literature\n2. Provide evidence-based answers with citations\n3. Include recent research findings\n4. Highlight any limitations or contradictions in the literature\n5. Suggest areas for further research if applicable",
+      "category": "medical_research"
+    },
+    {
+      "title": "Clinical Case Analysis",
+      "content": "You are a medical analysis assistant. Please analyze the following clinical case:\n\n{{CASE_DESCRIPTION}}\n\nProvide:\n1. Potential differential diagnoses\n2. Recommended diagnostic tests\n3. Evidence-based treatment options\n4. Relevant literature and guidelines\n5. Important considerations and red flags\n\nNote: This is for educational purposes only and should not replace professional medical judgment.",
+      "category": "case_analysis"
+    },
+    {
+      "title": "Drug Information Lookup",
+      "content": "Please provide comprehensive information about the medication: {{DRUG_NAME}}\n\nInclude:\n1. Mechanism of action\n2. Indications and contraindications\n3. Dosing information\n4. Side effects and adverse reactions\n5. Drug interactions\n6. Recent research and clinical trials\n7. Evidence-based prescribing guidelines",
+      "category": "pharmacology"
+    },
+    {
+      "title": "Medical Guideline Summary",
+      "content": "Please summarize the latest clinical guidelines for: {{CONDITION}}\n\nProvide:\n1. Current evidence-based recommendations\n2. Key diagnostic criteria\n3. Treatment algorithms\n4. Quality measures and outcomes\n5. Recent updates or changes\n6. Supporting literature and evidence levels",
+      "category": "guidelines"
+    },
+    {
+      "title": "Literature Review Assistant",
+      "content": "Please conduct a focused literature review on: {{TOPIC}}\n\nAnalyze:\n1. Current state of research\n2. Key findings and consensus\n3. Methodological considerations\n4. Gaps in knowledge\n5. Clinical implications\n6. Future research directions\n\nFocus on high-quality studies and systematic reviews.",
+      "category": "literature_review"
+    },
+    {
+      "title": "Patient Education Content",
+      "content": "Create patient-friendly educational content about: {{MEDICAL_TOPIC}}\n\nInclude:\n1. Simple explanation of the condition\n2. Symptoms to watch for\n3. Treatment options and their benefits/risks\n4. Lifestyle modifications\n5. When to seek medical attention\n6. Reliable resources for further information\n\nUse accessible language while maintaining medical accuracy.",
+      "category": "patient_education"
+    }
+  ]
+}

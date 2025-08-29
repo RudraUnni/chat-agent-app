@@ -1,5 +1,5 @@
 import { Link, useLocation } from 'react-router-dom'
-import { MessageCircle, Home, Wifi, WifiOff } from 'lucide-react'
+import { MessageCircle, Home, Wifi, WifiOff, Brain } from 'lucide-react'
 import clsx from 'clsx'
 import { useIsConnected } from '../../store/hooks'
 
@@ -10,6 +10,7 @@ const Header = () => {
   const navItems = [
     { path: '/', label: 'Home', icon: Home },
     { path: '/chat', label: 'Chat', icon: MessageCircle },
+    { path: '/ai', label: 'AI Interface', icon: Brain },
   ]
 
   return (

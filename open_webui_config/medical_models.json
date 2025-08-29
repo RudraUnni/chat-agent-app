@@ -1,0 +1,79 @@
+{
+  "medical_assistant_models": [
+    {
+      "id": "medical-assistant",
+      "name": "Medical Assistant",
+      "description": "AI-powered medical research assistant with PubMed integration",
+      "api_base": "http://host.docker.internal:8000/api/v1/openwebui",
+      "api_key": "medical-assistant-key",
+      "model_type": "openai",
+      "capabilities": {
+        "chat": true,
+        "streaming": true,
+        "function_calling": false,
+        "vision": false
+      },
+      "parameters": {
+        "temperature": 0.7,
+        "max_tokens": 2000,
+        "top_p": 0.9
+      },
+      "medical_features": {
+        "pubmed_integration": true,
+        "evidence_based": true,
+        "citation_support": true,
+        "medical_terminology": true
+      }
+    },
+    {
+      "id": "pubmed-research",
+      "name": "PubMed Research Specialist",
+      "description": "Specialized model for medical literature research and analysis",
+      "api_base": "http://host.docker.internal:8000/api/v1/openwebui",
+      "api_key": "medical-assistant-key",
+      "model_type": "openai",
+      "capabilities": {
+        "chat": true,
+        "streaming": true,
+        "function_calling": false,
+        "vision": false
+      },
+      "parameters": {
+        "temperature": 0.3,
+        "max_tokens": 3000,
+        "top_p": 0.8
+      },
+      "medical_features": {
+        "pubmed_integration": true,
+        "evidence_based": true,
+        "citation_support": true,
+        "research_focus": true
+      }
+    },
+    {
+      "id": "medical-analysis",
+      "name": "Medical Case Analysis",
+      "description": "Advanced medical case analysis and diagnosis support",
+      "api_base": "http://host.docker.internal:8000/api/v1/openwebui",
+      "api_key": "medical-assistant-key",
+      "model_type": "openai",
+      "capabilities": {
+        "chat": true,
+        "streaming": true,
+        "function_calling": false,
+        "vision": false
+      },
+      "parameters": {
+        "temperature": 0.5,
+        "max_tokens": 2500,
+        "top_p": 0.85
+      },
+      "medical_features": {
+        "pubmed_integration": true,
+        "evidence_based": true,
+        "diagnostic_support": true,
+        "case_analysis": true
+      }
+    }
+  ]
+}
