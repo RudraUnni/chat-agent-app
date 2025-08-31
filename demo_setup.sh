@@ -68,8 +68,8 @@ OPENAI_API_KEY=your-openai-api-key-here
 
 # Medical Assistant Configuration
 MEDICAL_ASSISTANT_ENABLED=true
-MEDICAL_WORKFLOW_URL=http://localhost:8001
-MEDICAL_API_ENDPOINT=http://localhost:8001/api/v1/chat
+MEDICAL_WORKFLOW_URL=http://backend:8000
+MEDICAL_API_ENDPOINT=http://backend:8000/api/v1/chat
 
 # Database
 DATABASE_URL=postgresql://chatapp:chatapp_password@postgres:5432/chatapp_db
@@ -106,18 +106,18 @@ fi
 
 # Start backend service
 print_header "🔧 Starting Medical Backend..."
-print_status "Starting FastAPI backend on port 8001..."
+print_status "Starting FastAPI backend on port 8000..."
 
-# Check if port 8001 is available
-if lsof -i :8001 > /dev/null 2>&1; then
-    print_warning "Port 8001 is already in use. Stopping existing process..."
-    lsof -ti :8001 | xargs kill -9 2>/dev/null || true
+# Check if port 8000 is available
+if lsof -i :8000 > /dev/null 2>&1; then
+    print_warning "Port 8000 is already in use. Stopping existing process..."
+    lsof -ti :8000 | xargs kill -9 2>/dev/null || true
     sleep 2
 fi
 
 # Start backend in background
 cd backend
-python3 -m uvicorn app.main:app --host 127.0.0.1 --port 8001 --reload > ../backend.log 2>&1 &
+python3 -m uvicorn app.main:app --host 127.0.0.1 --port 8000 --reload > ../backend.log 2>&1 &
 BACKEND_PID=$!
 cd ..
 
@@ -126,7 +126,7 @@ print_status "Waiting for backend to start..."
 sleep 10
 
 # Check backend status
-if curl -s http://localhost:8001/health > /dev/null; then
+if curl -s http://localhost:8000/health > /dev/null; then
     print_success "Medical backend is running and healthy"
 else
     print_error "Medical backend is not accessible"
@@ -166,7 +166,7 @@ cat > DEMO_INSTRUCTIONS.md << 'EOF'
 
 # Or manually start services
 docker compose up -d postgres open-webui
-cd backend && python3 -m uvicorn app.main:app --host 127.0.0.1 --port 8001 --reload
+cd backend && python3 -m uvicorn app.main:app --host 127.0.0.1 --port 8000 --reload
 ```
 
 ### 2. Access the Application
@@ -177,8 +177,8 @@ cd backend && python3 -m uvicorn app.main:app --host 127.0.0.1 --port 8001 --rel
 - **Capabilities**: RAG, Voice, Images, Web Search
 
 #### Medical Backend
-- **URL**: http://localhost:8001
-- **Health Check**: http://localhost:8001/health
+- **URL**: http://localhost:8000
+- **Health Check**: http://localhost:8000/health
 - **Features**: Medical workflows, PubMed research
 
 ### 3. Using the Medical Assistant
@@ -239,7 +239,7 @@ cd backend && python3 -m uvicorn app.main:app --host 127.0.0.1 --port 8001 --rel
 ### 6. Troubleshooting
 
 #### Common Issues
-1. **Port Conflicts**: Use `lsof -i :8001` to check
+1. **Port Conflicts**: Use `lsof -i :8000` to check
 2. **Service Won't Start**: Check Docker and Python processes
 3. **Connection Issues**: Verify both services are running
 
@@ -290,8 +290,8 @@ echo "🏥 Medical Assistant Pro is now running!"
 echo ""
 echo "📱 Access Points:"
 echo "  • Open WebUI Interface: http://localhost:8080"
-echo "  • Medical Backend: http://localhost:8001"
-echo "  • Health Check: http://localhost:8001/health"
+echo "  • Medical Backend: http://localhost:8000"
+echo "  • Health Check: http://localhost:8000/health"
 echo ""
 echo "🔧 Management Commands:"
 echo "  • View logs: docker compose logs -f"

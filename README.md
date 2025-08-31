@@ -21,14 +21,14 @@ docker compose up -d postgres open-webui
 
 # 2. Start the medical backend
 cd backend
-python3 -m uvicorn app.main:app --host 127.0.0.1 --port 8001 --reload
+python3 -m uvicorn app.main:app --host 127.0.0.1 --port 8000 --reload
 ```
 
 ## 📱 Access Your Medical Assistant
 
 - **🌐 Open WebUI Interface**: http://localhost:8080
-- **🔧 Medical Backend**: http://localhost:8001
-- **💚 Health Check**: http://localhost:8001/health
+- **🔧 Medical Backend**: http://localhost:8000
+- **💚 Health Check**: http://localhost:8000/health
 
 ## 🎯 What You Get
 

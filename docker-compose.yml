@@ -64,6 +64,9 @@ services:
       - ENABLE_IMAGE_GENERATION=true
       - ENABLE_WEB_SEARCH=true
       - ENABLE_FUNCTION_CALLING=true
+      - ENABLE_COMMUNITY_SHARING=false
+      - ENABLE_MODEL_FILTER=true
+      - MODEL_FILTER_LIST=medical-assistant
       - WEBUI_NAME=Medical Assistant Pro
       - WEBUI_DESCRIPTION=AI-powered medical consultation platform with research capabilities
       - WEBUI_TITLE=Medical Assistant Pro
@@ -71,11 +74,12 @@ services:
       - WEBUI_SECONDARY_COLOR=#1e40af
       - WEBUI_ACCENT_COLOR=#3b82f6
       - MEDICAL_ASSISTANT_ENABLED=true
-      - MEDICAL_WORKFLOW_URL=http://localhost:8001
-      - MEDICAL_API_ENDPOINT=http://localhost:8001/api/v1/chat
+      - MEDICAL_WORKFLOW_URL=http://backend:8000
+      - MEDICAL_API_ENDPOINT=http://backend:8000/api/v1/chat
     volumes:
       - openwebui_data:/app/backend/data
       - openwebui_uploads:/app/backend/uploads
+      - ./openwebui_functions:/app/backend/functions
     depends_on:
       - postgres
     networks:
