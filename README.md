@@ -1,76 +1,92 @@
-# Medical Assistant
+# 🏥 Medical Assistant Pro
 
-A medical research assistant powered by PubMed database integration and AI-driven analysis.
+**A plug-and-play medical chat assistant demo that runs via Docker, uses OpenWebUI, and integrates with FastAPI workflows.**
 
-## Overview
+## 🚀 Quick Start
 
-This application provides a chat interface for medical research queries, leveraging the PubMed database to provide evidence-based medical information. The system uses a multi-agent workflow to search, analyze, and synthesize medical literature.
-
-## Features
-
-- **Medical Research**: Access to PubMed database for evidence-based medical information
-- **Real-time Chat**: WebSocket-powered chat interface with streaming responses
-- **Markdown Support**: Rich text formatting for medical literature and research findings
-- **Multi-agent Workflow**: Sophisticated backend processing with specialized medical agents
-
-## Architecture
-
-### Backend
-- **FastAPI** - Modern Python web framework
-- **PostgreSQL** - Database for user sessions and chat history
-- **Multi-agent System** - Specialized agents for PubMed research and analysis
-- **WebSocket Support** - Real-time streaming responses
-
-### Frontend
-- **React + TypeScript** - Modern frontend framework
-- **Tailwind CSS** - Utility-first styling
-- **Redux Toolkit** - State management
-- **React Markdown** - Rich text rendering for medical content
-
-## Quick Start
-
-### Prerequisites
-- Python 3.8+
-- Node.js 16+
-- Docker (for PostgreSQL)
-
-### Backend Setup
+### One-Command Setup
 ```bash
+# Clone the repository
+git clone <your-repo-url>
+cd chat-agent-app
+
+# Run the demo setup (this does everything!)
+./demo_setup.sh
+```
+
+### Manual Setup
+```bash
+# 1. Start Open WebUI and PostgreSQL
+docker compose up -d postgres open-webui
+
+# 2. Start the medical backend
 cd backend
-pip install -r requirements.txt
-docker-compose up -d  # Start PostgreSQL
-python -m app.main    # Start FastAPI server
+python3 -m uvicorn app.main:app --host 127.0.0.1 --port 8001 --reload
 ```
 
-### Frontend Setup
+## 📱 Access Your Medical Assistant
+
+- **🌐 Open WebUI Interface**: http://localhost:8080
+- **🔧 Medical Backend**: http://localhost:8001
+- **💚 Health Check**: http://localhost:8001/health
+
+## 🎯 What You Get
+
+✅ **Professional Medical AI Interface** - Beautiful Open WebUI with medical branding  
+✅ **Medical Workflows** - PubMed research, consultation, document analysis  
+✅ **RAG Capabilities** - Upload and analyze medical documents  
+✅ **Voice Features** - Speech-to-text and text-to-speech  
+✅ **Chat Memory** - Persistent conversation history and context  
+✅ **Docker Ready** - One-command deployment  
+
+## 🧪 Demo Scenarios
+
+### 1. Medical Research
+Ask: *"What are the latest treatments for diabetes?"*
+
+### 2. Document Analysis
+Upload a medical research paper and ask questions about it
+
+### 3. Medical Consultation
+Describe symptoms and get AI-powered insights
+
+## 🔧 Management
+
 ```bash
-cd frontend
-npm install
-npm run dev  # Start development server
+# View logs
+docker compose logs -f
+
+# Stop services
+docker compose down
+
+# Restart everything
+./demo_setup.sh
+
+# Stop backend only
+kill $(cat .backend_pid)
 ```
 
-## Usage
+## 📚 Documentation
 
-1. Navigate to the frontend application
-2. Start a conversation by typing a medical question
-3. The system will search PubMed and provide evidence-based responses
-4. Chat history is maintained across sessions
+- **Demo Instructions**: `DEMO_INSTRUCTIONS.md` - Complete demo guide
+- **Integration Guide**: `INTEGRATION_README.md` - Technical details
+- **Deliverables**: `DELIVERABLES_SUMMARY.md` - What's been achieved
 
-## Configuration
+## 🎉 Deliverables Status
 
-Key configuration options in `backend/app/core/config.py`:
-- `pubmed_max_results`: Maximum number of PubMed results to fetch
-- `default_llm_model`: AI model for text generation
-- Database connection settings
+- ✅ **Deliverable 1**: OpenWebUI running side-by-side with backend
+- ✅ **Deliverable 2**: Medical agent with chat memory and tools  
+- ✅ **Deliverable 3**: Plug-and-play demo ready for presentation
 
-## Contributing
+## 🚀 Next Steps
 
-1. Fork the repository
-2. Create a feature branch
-3. Make your changes
-4. Run tests and linting
-5. Submit a pull request
+1. **Customize Branding** - Update colors, logos, and themes
+2. **Add Medical Tools** - Integrate more medical workflows
+3. **Deploy to Production** - Scale for multiple users
+4. **Mobile App** - Create mobile interface
 
-## License
+---
 
-This project is licensed under the MIT License.
+**🏥 Your Medical Assistant Pro is ready for demonstration! 🏥**
+
+*Built with Open WebUI v0.6.5, FastAPI, and PostgreSQL*

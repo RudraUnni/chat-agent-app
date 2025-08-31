@@ -18,6 +18,8 @@ services:
       interval: 10s
       timeout: 5s
       retries: 3
+    networks:
+      - chatapp_network
 
   # Optional: pgAdmin for database management
   pgadmin:
@@ -36,9 +38,110 @@ services:
       - postgres
     profiles:
       - dev  # Only start with: docker-compose --profile dev up
+    networks:
+      - chatapp_network
+
+  # Open WebUI Service (v0.6.5 - Free Version)
+  open-webui:
+    image: ghcr.io/open-webui/open-webui:v0.6.5
+    container_name: chatapp_openwebui
+    restart: unless-stopped
+    ports:
+      - "8080:8080"
+    environment:
+      - OLLAMA_BASE_URL=http://host.docker.internal:11434
+      - WEBUI_SECRET_KEY=your-secret-key-here
+      - DEFAULT_MODELS=gpt-3.5-turbo,medical-assistant
+      - ENABLE_SIGNUP=false
+      - ENABLE_LOGIN_FORM=true
+      - ENABLE_OAUTH=false
+      - ENABLE_HEADERS_AUTH=false
+      - ENABLE_OPENAI_API=true
+      - OPENAI_API_KEY=your-openai-api-key
+      - OPENAI_API_BASE_URL=https://api.openai.com/v1
+      - ENABLE_RAG=true
+      - ENABLE_VOICE=true
+      - ENABLE_IMAGE_GENERATION=true
+      - ENABLE_WEB_SEARCH=true
+      - ENABLE_FUNCTION_CALLING=true
+      - WEBUI_NAME=Medical Assistant Pro
+      - WEBUI_DESCRIPTION=AI-powered medical consultation platform with research capabilities
+      - WEBUI_TITLE=Medical Assistant Pro
+      - WEBUI_PRIMARY_COLOR=#2563eb
+      - WEBUI_SECONDARY_COLOR=#1e40af
+      - WEBUI_ACCENT_COLOR=#3b82f6
+      - MEDICAL_ASSISTANT_ENABLED=true
+      - MEDICAL_WORKFLOW_URL=http://localhost:8001
+      - MEDICAL_API_ENDPOINT=http://localhost:8001/api/v1/chat
+    volumes:
+      - openwebui_data:/app/backend/data
+      - openwebui_uploads:/app/backend/uploads
+    depends_on:
+      - postgres
+    networks:
+      - chatapp_network
+
+  # FastAPI Backend Service
+  backend:
+    build: ./backend
+    container_name: chatapp_backend
+    restart: unless-stopped
+    ports:
+      - "8000:8000"
+    environment:
+      - OPENAI_API_KEY=${OPENAI_API_KEY}
+      - DATABASE_URL=postgresql://chatapp:chatapp_password@postgres:5432/chatapp_db
+    volumes:
+      - ./backend:/app
+    depends_on:
+      postgres:
+        condition: service_healthy
+    networks:
+      - chatapp_network
+
+  # Nginx Reverse Proxy
+  nginx:
+    image: nginx:alpine
+    container_name: chatapp_nginx
+    restart: unless-stopped
+    ports:
+      - "80:80"
+      - "8000:8000"
+      - "3000:3000"
+      - "9000:9000"
+    volumes:
+      - ./nginx/nginx.conf:/etc/nginx/nginx.conf:ro
+    depends_on:
+      - open-webui
+      - backend
+    networks:
+      - chatapp_network
+
+  # React Frontend Service
+  frontend:
+    build: ./frontend
+    container_name: chatapp_frontend
+    restart: unless-stopped
+    ports:
+      - "3000:3000"
+    volumes:
+      - ./frontend:/app
+      - /app/node_modules
+    depends_on:
+      - backend
+    networks:
+      - chatapp_network
 
 volumes:
   postgres_data:
     driver: local
   pgadmin_data:
     driver: local
+  openwebui_data:
+    driver: local
+  openwebui_uploads:
+    driver: local
+
+networks:
+  chatapp_network:
+    driver: bridge
