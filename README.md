@@ -1,92 +1,119 @@
-# 🏥 Medical Assistant Pro
+# 🏥 Medical Assistant Pro - OpenWebUI Integration
 
-**A plug-and-play medical chat assistant demo that runs via Docker, uses OpenWebUI, and integrates with FastAPI workflows.**
+**A complete medical AI consultation platform integrating OpenWebUI v0.6.5 with FastAPI backend and PubMed research capabilities.**
+
+## 🎯 What You Get
+
+✅ **Professional Medical AI Interface** - OpenWebUI with medical branding and theming  
+✅ **PubMed Research Integration** - Real-time medical research and paper analysis  
+✅ **Conversation Memory** - Session-based chat history and context preservation  
+✅ **Medical Workflows** - Specialized AI agents for medical consultation  
+✅ **One-Command Setup** - Complete Docker-based deployment  
+✅ **Production Ready** - Comprehensive testing and documentation  
 
 ## 🚀 Quick Start
 
-### One-Command Setup
+### **Method 1: One-Command Demo (Recommended)**
 ```bash
-# Clone the repository
-git clone <your-repo-url>
-cd chat-agent-app
-
-# Run the demo setup (this does everything!)
-./demo_setup.sh
+# Run the complete working demo
+./run_working_demo.sh
 ```
 
-### Manual Setup
+### **Method 2: Manual Setup**
 ```bash
-# 1. Start Open WebUI and PostgreSQL
-docker compose up -d postgres open-webui
+# Start all services
+docker compose up -d
 
-# 2. Start the medical backend
-cd backend
-python3 -m uvicorn app.main:app --host 127.0.0.1 --port 8000 --reload
+# Test the integration
+python3 test_working_integration.py
 ```
 
 ## 📱 Access Your Medical Assistant
 
-- **🌐 Open WebUI Interface**: http://localhost:8080
+- **🌐 OpenWebUI Interface**: http://localhost:8080
 - **🔧 Medical Backend**: http://localhost:8000
 - **💚 Health Check**: http://localhost:8000/health
 
 ## 🎯 What You Get
 
-✅ **Professional Medical AI Interface** - Beautiful Open WebUI with medical branding  
+✅ **Professional Medical AI Interface** - Beautiful OpenWebUI with medical branding  
 ✅ **Medical Workflows** - PubMed research, consultation, document analysis  
-✅ **RAG Capabilities** - Upload and analyze medical documents  
-✅ **Voice Features** - Speech-to-text and text-to-speech  
-✅ **Chat Memory** - Persistent conversation history and context  
-✅ **Docker Ready** - One-command deployment  
+✅ **Conversation Memory** - Maintains chat context across sessions  
+✅ **Research Integration** - Live PubMed paper search and analysis  
+✅ **One-Click Setup** - Docker Compose deployment  
 
-## 🧪 Demo Scenarios
+## 🏥 Medical Features
 
-### 1. Medical Research
-Ask: *"What are the latest treatments for diabetes?"*
+- **🔬 PubMed Research**: Search and analyze medical research papers
+- **📋 Medical Consultation**: AI-powered medical question answering
+- **🧠 Context Memory**: Remembers conversation history for better responses
+- **📊 Paper Analysis**: Detailed analysis of research papers by PMID
+- **⚠️ Medical Disclaimers**: Appropriate disclaimers for medical information
 
-### 2. Document Analysis
-Upload a medical research paper and ask questions about it
+## 📖 Documentation
 
-### 3. Medical Consultation
-Describe symptoms and get AI-powered insights
+- **📋 How to Run Demo**: [HOW_TO_RUN_DEMO.md](HOW_TO_RUN_DEMO.md) - Step-by-step demo instructions
+- **📖 Complete Guide**: [OPENWEBUI_INTEGRATION_COMPLETE_GUIDE.md](OPENWEBUI_INTEGRATION_COMPLETE_GUIDE.md) - Technical documentation
+- **🏗️ Project Structure**: [PROJECT_STRUCTURE.md](PROJECT_STRUCTURE.md) - Project organization
+- **🎯 Demo Overview**: [WORKING_DEMO_README.md](WORKING_DEMO_README.md) - Demo features and usage
 
-## 🔧 Management
+## 🧪 Testing
 
 ```bash
-# View logs
-docker compose logs -f
+# Run comprehensive integration tests
+python3 test_working_integration.py
 
-# Stop services
-docker compose down
-
-# Restart everything
-./demo_setup.sh
-
-# Stop backend only
-kill $(cat .backend_pid)
+# Check service health
+curl http://localhost:8000/health
+curl -I http://localhost:8080
 ```
 
-## 📚 Documentation
+## 🎯 Demo Scenarios
 
-- **Demo Instructions**: `DEMO_INSTRUCTIONS.md` - Complete demo guide
-- **Integration Guide**: `INTEGRATION_README.md` - Technical details
-- **Deliverables**: `DELIVERABLES_SUMMARY.md` - What's been achieved
+### **Medical Research Query**
+```
+User: "What are the latest treatments for diabetes?"
+Assistant: [Searches PubMed and provides research-based response with citations]
+```
 
-## 🎉 Deliverables Status
+### **Paper Analysis**
+```
+User: "Tell me about PMID 34567890"
+Assistant: [Retrieves and analyzes the specific research paper]
+```
 
-- ✅ **Deliverable 1**: OpenWebUI running side-by-side with backend
-- ✅ **Deliverable 2**: Medical agent with chat memory and tools  
-- ✅ **Deliverable 3**: Plug-and-play demo ready for presentation
+### **Conversational Context**
+```
+User: "What is hypertension?"
+User: "What are the treatment options?" 
+Assistant: [Remembers context and provides relevant treatment information]
+```
 
-## 🚀 Next Steps
+## 🔧 Technical Stack
 
-1. **Customize Branding** - Update colors, logos, and themes
-2. **Add Medical Tools** - Integrate more medical workflows
-3. **Deploy to Production** - Scale for multiple users
-4. **Mobile App** - Create mobile interface
+- **Frontend**: OpenWebUI v0.6.5 with medical branding
+- **Backend**: FastAPI with medical workflows
+- **Database**: PostgreSQL with conversation storage
+- **AI Agents**: Multi-agent system for medical consultation
+- **Research Tools**: PubMed integration via NCBI E-utilities
+- **Deployment**: Docker Compose with Nginx proxy
+
+## 🏆 Deliverables Achieved
+
+✅ **Day 1**: OpenWebUI running side-by-side with backend - medical assistant responds  
+✅ **Day 2**: Chat memory working + tool integration for medical document retrieval  
+✅ **Day 3**: Polished demo with medical branding and one-command setup  
+
+## 🎉 Ready to Use!
+
+Your Medical Assistant Pro is ready for:
+- 🏥 Medical consultation and research
+- 📋 Educational medical information
+- 🔬 Research paper analysis and summarization
+- 💬 Context-aware medical conversations
+
+**Start your demo now**: `./run_working_demo.sh`
 
 ---
 
-**🏥 Your Medical Assistant Pro is ready for demonstration! 🏥**
-
-*Built with Open WebUI v0.6.5, FastAPI, and PostgreSQL*
+*⚠️ Medical Disclaimer: This AI-powered system is for educational and research purposes only. Always consult with qualified healthcare professionals for medical decisions.*
