@@ -83,9 +83,19 @@ MEDICAL_API_ENDPOINT=http://backend:8000/api/v1/chat
 # Database
 DATABASE_URL=postgresql://chatapp:chatapp_password@postgres:5432/chatapp_db
 EOF
-    print_warning "⚠️  .env file created with default values. Update OPENAI_API_KEY if needed."
+    print_warning "⚠️  .env file created with default values."
+    print_warning "⚠️  IMPORTANT: Update OPENAI_API_KEY with your actual API key before running the demo."
+    echo ""
+    print_status "Please edit .env file and set your OpenAI API key, then run this script again."
+    exit 1
 else
-    print_success ".env file already exists"
+    # Check if API key is set
+    if grep -q "your-openai-api-key-here" .env; then
+        print_error "❌ OPENAI_API_KEY is not set in .env file"
+        print_status "Please edit .env file and set your OpenAI API key, then run this script again."
+        exit 1
+    fi
+    print_success ".env file exists and API key is configured"
 fi
 
 # Stop any existing services

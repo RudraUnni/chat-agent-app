@@ -661,94 +661,6 @@ pipe.description = "AI-powered medical consultation with PubMed research capabil
 
 ---
 
-## 🐛 **Troubleshooting and Fixes Applied**
-
-### **Critical Issues Identified and Fixed**
-
-#### **Issue 1: Port Mismatch (CRITICAL)**
-**Problem**: OpenWebUI configured to connect to `localhost:8001` but FastAPI runs on `localhost:8000`
-
-**Files Affected**:
-- `docker-compose.yml` - Lines 74-75
-- `openwebui.env` - Lines 64-65
-- `demo_setup.sh` - Multiple references
-- `README.md` - Access URLs
-
-**Fix Applied**:
-```bash
-# Before (incorrect):
-MEDICAL_WORKFLOW_URL=http://localhost:8001
-MEDICAL_API_ENDPOINT=http://localhost:8001/api/v1/chat
-
-# After (correct):
-MEDICAL_WORKFLOW_URL=http://backend:8000
-MEDICAL_API_ENDPOINT=http://backend:8000/api/v1/chat
-```
-
-**Impact**: This fix enabled OpenWebUI to successfully connect to the FastAPI backend.
-
-#### **Issue 2: CORS Configuration Missing**
-**Problem**: FastAPI CORS didn't allow requests from OpenWebUI's port (8080)
-
-**Fix Applied**:
-```python
-# backend/app/main.py - Updated CORS middleware
-app.add_middleware(
-    CORSMiddleware,
-    allow_origins=[
-        "http://localhost:3000",     # React frontend
-        "http://localhost:5173",     # Vite dev server
-        "http://localhost:8080",     # OpenWebUI (added)
-        "http://open-webui:8080"     # OpenWebUI container (added)
-    ],
-    allow_credentials=True,
-    allow_methods=["GET", "POST"],
-    allow_headers=["*"],
-)
-```
-
-**Impact**: Enabled cross-origin requests from OpenWebUI to FastAPI backend.
-
-#### **Issue 3: Missing Integration Mechanism**
-**Problem**: No way for OpenWebUI to communicate with FastAPI backend
-
-**Fix Applied**:
-- Created custom OpenWebUI functions in `openwebui_functions/`
-- Added function volume mount to docker-compose.yml
-- Implemented request/response handling between services
-
-**Impact**: Established seamless communication between OpenWebUI and FastAPI.
-
-#### **Issue 4: Docker Networking Issues**
-**Problem**: Services using localhost instead of Docker container names
-
-**Fix Applied**:
-```yaml
-# Updated environment variables to use container names
-- MEDICAL_WORKFLOW_URL=http://backend:8000  # Instead of localhost:8001
-- MEDICAL_API_ENDPOINT=http://backend:8000/api/v1/chat
-```
-
-**Impact**: Enabled proper container-to-container communication within Docker network.
-
-### **Files Removed During Cleanup**
-- `simple_deliverable1_test.py` - Replaced by comprehensive test
-- `test_baseline_integration.py` - Replaced by working integration test
-- `test_medical_workflow.py` - Functionality covered in new test
-- `check_demo_status.py` - Replaced by integration test
-- `deliverable1_demo.py` - Replaced by working demo script
-- `final_deliverables_demo.py` - Replaced by working demo script
-- `start_openwebui.sh` - Replaced by working demo script
-- `demo_setup.sh` - Replaced by working demo script
-- `openwebui_integration_config.py` - Functionality moved to functions
-- `DELIVERABLES_SUMMARY.md` - Replaced by comprehensive documentation
-- `INTEGRATION_README.md` - Replaced by working demo readme
-- `SETUP_GUIDE.md` - Replaced by step-by-step guide
-- `FIXES_APPLIED.md` - Integrated into this comprehensive guide
-- `scripts/` directory - All scripts replaced by working demo
-
----
-
 ## 🧪 **Testing and Validation**
 
 ### **Integration Test Script**
@@ -801,13 +713,6 @@ def test_cors_headers():
 - ✅ Error handling works gracefully
 - ✅ CORS configuration allows cross-origin requests
 
-### **Performance Metrics**
-- **Startup Time**: ~60-90 seconds for all services
-- **Response Time**: 10-30 seconds for medical queries (depends on PubMed API)
-- **Memory Usage**: ~2-3GB total for all containers
-- **CPU Usage**: Moderate during query processing, low at idle
-
----
 
 ## 🎯 **Deliverables Achievement**
 

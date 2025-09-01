@@ -1,5 +1,3 @@
-version: '3.8'
-
 services:
   postgres:
     image: postgres:15-alpine
@@ -41,6 +39,30 @@ services:
     networks:
       - chatapp_network
 
+  # FastAPI Backend Service
+  backend:
+    build: ./backend
+    container_name: chatapp_backend
+    restart: unless-stopped
+    ports:
+      - "8000:8000"
+    environment:
+      - OPENAI_API_KEY=${OPENAI_API_KEY}
+      - DATABASE_URL=postgresql://chatapp:chatapp_password@postgres:5432/chatapp_db
+    volumes:
+      - ./backend:/app
+    depends_on:
+      postgres:
+        condition: service_healthy
+    healthcheck:
+      test: ["CMD-SHELL", "python -c \"import urllib.request; urllib.request.urlopen('http://localhost:8000/health')\" || exit 1"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 40s
+    networks:
+      - chatapp_network
+
   # Open WebUI Service (v0.6.5 - Free Version)
   open-webui:
     image: ghcr.io/open-webui/open-webui:v0.6.5
@@ -50,14 +72,15 @@ services:
       - "8080:8080"
     environment:
       - OLLAMA_BASE_URL=http://host.docker.internal:11434
-      - WEBUI_SECRET_KEY=your-secret-key-here
+      - ENABLE_OLLAMA=true
+      - WEBUI_SECRET_KEY=${WEBUI_SECRET_KEY:-medical-assistant-pro-demo-2024}
       - DEFAULT_MODELS=gpt-3.5-turbo,medical-assistant
       - ENABLE_SIGNUP=false
       - ENABLE_LOGIN_FORM=true
       - ENABLE_OAUTH=false
       - ENABLE_HEADERS_AUTH=false
       - ENABLE_OPENAI_API=true
-      - OPENAI_API_KEY=your-openai-api-key
+      - OPENAI_API_KEY=${OPENAI_API_KEY}
       - OPENAI_API_BASE_URL=https://api.openai.com/v1
       - ENABLE_RAG=true
       - ENABLE_VOICE=true
@@ -81,25 +104,14 @@ services:
       - openwebui_uploads:/app/backend/uploads
       - ./openwebui_functions:/app/backend/functions
     depends_on:
-      - postgres
-    networks:
-      - chatapp_network
-
-  # FastAPI Backend Service
-  backend:
-    build: ./backend
-    container_name: chatapp_backend
-    restart: unless-stopped
-    ports:
-      - "8000:8000"
-    environment:
-      - OPENAI_API_KEY=${OPENAI_API_KEY}
-      - DATABASE_URL=postgresql://chatapp:chatapp_password@postgres:5432/chatapp_db
-    volumes:
-      - ./backend:/app
-    depends_on:
-      postgres:
+      backend:
         condition: service_healthy
+    healthcheck:
+      test: ["CMD-SHELL", "python -c \"import urllib.request; urllib.request.urlopen('http://localhost:8080')\" || exit 1"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 40s
     networks:
       - chatapp_network
 
@@ -110,28 +122,10 @@ services:
     restart: unless-stopped
     ports:
       - "80:80"
-      - "8000:8000"
-      - "3000:3000"
-      - "9000:9000"
     volumes:
       - ./nginx/nginx.conf:/etc/nginx/nginx.conf:ro
     depends_on:
       - open-webui
-      - backend
-    networks:
-      - chatapp_network
-
-  # React Frontend Service
-  frontend:
-    build: ./frontend
-    container_name: chatapp_frontend
-    restart: unless-stopped
-    ports:
-      - "3000:3000"
-    volumes:
-      - ./frontend:/app
-      - /app/node_modules
-    depends_on:
       - backend
     networks:
       - chatapp_network

@@ -30,12 +30,19 @@ app = FastAPI(
     lifespan=lifespan
 )
 
-# Add CORS middleware
+# Add CORS middleware with proper configuration
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=["*"],  # Allow all origins in standalone mode
+    allow_origins=[
+        "http://localhost:3000",     # React frontend
+        "http://localhost:5173",     # Vite dev server
+        "http://localhost:8080",     # OpenWebUI
+        "http://open-webui:8080",    # OpenWebUI container
+        "http://localhost:80",       # Nginx proxy
+        "http://localhost"           # Nginx proxy (no port)
+    ],
     allow_credentials=True,
-    allow_methods=["GET", "POST"],
+    allow_methods=["GET", "POST", "OPTIONS"],
     allow_headers=["*"],
 )
 
