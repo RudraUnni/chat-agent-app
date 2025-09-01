@@ -167,3 +167,144 @@ async def delete_session(
     """Delete a chat session"""
     chat_manager.delete_session(session_id)
     return {"message": "Session deleted"}
+
+
+# OpenAI-compatible endpoints for Open WebUI integration
+@router.get("/models")
+async def get_models():
+    """
+    OpenAI-compatible endpoint for Open WebUI to discover available models
+    """
+    return {
+        "object": "list",
+        "data": [
+            {
+                "id": "medical-assistant",
+                "object": "model",
+                "created": 1677610602,
+                "owned_by": "medical-assistant",
+                "permission": [],
+                "root": "medical-assistant",
+                "parent": None
+            },
+            {
+                "id": "pubmed-research",
+                "object": "model", 
+                "created": 1677610602,
+                "owned_by": "medical-assistant",
+                "permission": [],
+                "root": "pubmed-research",
+                "parent": None
+            }
+        ]
+    }
+
+
+class OpenAIChatMessage(BaseModel):
+    role: str
+    content: str
+
+
+class OpenAIChatRequest(BaseModel):
+    model: str
+    messages: List[OpenAIChatMessage]
+    stream: bool = False
+    temperature: float = 0.7
+    max_tokens: int = 1000
+
+
+@router.post("/chat/completions")
+async def openai_chat_completions(
+    request: OpenAIChatRequest,
+    workflow_registry: WorkflowRegistry = Depends(get_workflow_registry),
+    chat_manager: ChatManager = Depends(get_chat_manager)
+):
+    """
+    OpenAI-compatible chat completions endpoint for Open WebUI integration
+    """
+    try:
+        # Convert OpenAI format to our internal format
+        if not request.messages:
+            raise HTTPException(status_code=400, detail="Messages cannot be empty")
+        
+        # Get the last user message
+        last_message = request.messages[-1]
+        if last_message.role != "user":
+            raise HTTPException(status_code=400, detail="Last message must be from user")
+        
+        # Create session for this conversation
+        session = chat_manager.get_or_create_session(None)
+        
+        # Add conversation history to session
+        for msg in request.messages[:-1]:  # All except the last message
+            if msg.role == "user":
+                session.add_user_message(msg.content)
+            elif msg.role == "assistant":
+                session.add_assistant_message(msg.content)
+        
+        # Add the current user message
+        session.add_user_message(last_message.content)
+        
+        # Determine workflow based on model name
+        workflow_name = "pubmed_research"  # Default
+        if "research" in request.model.lower():
+            workflow_name = "pubmed_research"
+        
+        # Get workflow
+        workflow = workflow_registry.get_workflow(workflow_name)
+        if not workflow:
+            raise HTTPException(
+                status_code=404,
+                detail=f"Workflow '{workflow_name}' not found"
+            )
+        
+        # Prepare input data
+        input_data = {
+            'message': last_message.content,
+            'conversation_history': session.get_messages_for_agent(),
+            'temperature': request.temperature,
+            'max_tokens': request.max_tokens
+        }
+        
+        # Update context
+        session.context.history = [
+            {"role": msg.role, "content": msg.content, "timestamp": msg.timestamp.isoformat() if msg.timestamp else None}
+            for msg in session.get_conversation_history()
+        ]
+        
+        # Execute workflow
+        result = await workflow.execute(input_data, session.context)
+        
+        if result.success:
+            response_text = extract_workflow_response(result, workflow_name)
+            session.add_assistant_message(response_text)
+            
+            # Return OpenAI-compatible response
+            return {
+                "id": f"chatcmpl-{session.session_id}",
+                "object": "chat.completion",
+                "created": int(session.last_activity.timestamp()),
+                "model": request.model,
+                "choices": [
+                    {
+                        "index": 0,
+                        "message": {
+                            "role": "assistant",
+                            "content": response_text
+                        },
+                        "finish_reason": "stop"
+                    }
+                ],
+                "usage": {
+                    "prompt_tokens": len(last_message.content.split()),
+                    "completion_tokens": len(response_text.split()),
+                    "total_tokens": len(last_message.content.split()) + len(response_text.split())
+                }
+            }
+        else:
+            error_message = format_workflow_error(result, workflow_name)
+            raise HTTPException(status_code=500, detail=error_message)
+            
+    except Exception as e:
+        logger.error(f"OpenAI chat completions error: {str(e)}")
+        raise HTTPException(status_code=500, detail=str(e))

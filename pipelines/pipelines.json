@@ -1,0 +1,18 @@
+{
+  "pipelines": [
+    {
+      "id": "medical-assistant",
+      "name": "Medical Assistant Pipeline",
+      "file": "medical_assistant_pipeline.py",
+      "enabled": true,
+      "description": "Connects to your FastAPI medical assistant workflow with PubMed research capabilities"
+    },
+    {
+      "id": "pdf-summarizer",
+      "name": "PDF Summarizer Tool",
+      "file": "pdf_summarizer_pipeline.py", 
+      "enabled": true,
+      "description": "Medical document and PDF summarization tool using your medical assistant workflow"
+    }
+  ]
+}

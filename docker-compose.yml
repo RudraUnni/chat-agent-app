@@ -1,6 +1,32 @@
 version: '3.8'
 
 services:
+  # FastAPI Backend Service
+  backend:
+    build:
+      context: ./backend
+      dockerfile: Dockerfile
+    container_name: chatapp_backend
+    restart: unless-stopped
+    environment:
+      - DATABASE_URL=postgresql://chatapp:chatapp_password@postgres:5432/chatapp_db
+      - OPENAI_API_KEY=${OPENAI_API_KEY:-}
+      - ENVIRONMENT=production
+    ports:
+      - "8000:8000"
+    depends_on:
+      postgres:
+        condition: service_healthy
+    networks:
+      - chatapp-network
+    volumes:
+      - ./backend/.env:/app/.env:ro  # Mount environment file
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:8000/health"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+
   postgres:
     image: postgres:15-alpine
     container_name: chatapp_postgres
@@ -13,6 +39,8 @@ services:
       - "5432:5432"
     volumes:
       - postgres_data:/var/lib/postgresql/data
+    networks:
+      - chatapp-network
     healthcheck:
       test: ["CMD-SHELL", "pg_isready -U chatapp -d chatapp_db"]
       interval: 10s
@@ -34,11 +62,53 @@ services:
       - pgadmin_data:/var/lib/pgadmin
     depends_on:
       - postgres
+    networks:
+      - chatapp-network
     profiles:
       - dev  # Only start with: docker-compose --profile dev up
+
+  # Open WebUI for enhanced chat interface
+  open-webui:
+    image: ghcr.io/open-webui/open-webui:v0.6.5
+    container_name: chatapp_open_webui
+    restart: unless-stopped
+    environment:
+      - OLLAMA_BASE_URL=  # Leave empty if not using Ollama
+      - WEBUI_SECRET_KEY=your-medical-assistant-secret-key-change-this
+      - WEBUI_AUTH=false  # Set to true if you want authentication
+      - DEFAULT_MODELS=medical-assistant  # Your custom model name
+      - ENABLE_SIGNUP=true
+      - ENABLE_LOGIN_FORM=true
+      - WEBUI_NAME=Medical Assistant Chat
+      - ENABLE_COMMUNITY_SHARING=false
+      - ENABLE_MESSAGE_RATING=true
+      - ENABLE_MODEL_FILTER=true
+    ports:
+      - "3001:8080"  # Expose on port 3001 to avoid conflicts
+    volumes:
+      - open-webui-data:/app/backend/data
+      - ./pipelines:/app/backend/pipelines:ro  # Mount your custom pipelines as read-only
+    depends_on:
+      backend:
+        condition: service_healthy
+      postgres:
+        condition: service_healthy
+    networks:
+      - chatapp-network
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:8080/health"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
 
 volumes:
   postgres_data:
     driver: local
   pgadmin_data:
     driver: local
+  open-webui-data:
+    driver: local
+
+networks:
+  chatapp-network:
+    driver: bridge
