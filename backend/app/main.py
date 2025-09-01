@@ -4,7 +4,7 @@ from fastapi.middleware.cors import CORSMiddleware
 from contextlib import asynccontextmanager
 
 from app.api.v1.router import api_router
-from app.database.connection import init_db, close_db
+from app.database.mock_connection import init_db, close_db
 from app.core.config import get_settings
 
 settings = get_settings()
@@ -30,12 +30,19 @@ app = FastAPI(
     lifespan=lifespan
 )
 
-# Add CORS middleware
+# Add CORS middleware with proper configuration
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=["http://localhost:3000", "http://localhost:5173"],
+    allow_origins=[
+        "http://localhost:3000",     # React frontend
+        "http://localhost:5173",     # Vite dev server
+        "http://localhost:8080",     # OpenWebUI
+        "http://open-webui:8080",    # OpenWebUI container
+        "http://localhost:80",       # Nginx proxy
+        "http://localhost"           # Nginx proxy (no port)
+    ],
     allow_credentials=True,
-    allow_methods=["GET", "POST"],
+    allow_methods=["GET", "POST", "OPTIONS"],
     allow_headers=["*"],
 )
 
