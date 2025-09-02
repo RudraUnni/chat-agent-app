@@ -40,6 +40,14 @@ class Settings(BaseSettings):
     pubmed_max_results: int = 5
     pubmed_timeout: int = 15
     
+    # Additional environment variables that might be passed from Docker
+    environment: Optional[str] = None
+    api_host: Optional[str] = None
+    api_port: Optional[str] = None
+    session_expire_hours: Optional[str] = None
+    redis_host: Optional[str] = None
+    redis_port: Optional[str] = None
+    
     @field_validator('pubmed_timeout', mode='before')
     @classmethod
     def parse_pubmed_timeout(cls, v):
@@ -50,9 +58,11 @@ class Settings(BaseSettings):
             return int(float(v))
         return v
     
-    class Config:
-        env_file = [".env", "../.env", "../../.env"]
-        case_sensitive = False
+    model_config = {
+        "env_file": [".env", "../.env", "../../.env"],
+        "case_sensitive": False,
+        "extra": "ignore"  # Ignore extra environment variables
+    }
         
     @property
     def async_database_url(self) -> str:

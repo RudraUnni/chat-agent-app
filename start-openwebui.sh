@@ -35,19 +35,19 @@ if [ ! -f backend/.env ]; then
 fi
 
 echo ""
-echo "🚀 Starting services..."
+echo "Starting services..."
 echo "----------------------"
 
 # Start the services
 docker-compose up -d
 
 echo ""
-echo "⏳ Waiting for services to be ready..."
+echo "Waiting for services to be ready..."
 sleep 10
 
 # Check service status
 echo ""
-echo "📊 Service Status:"
+echo "Service Status:"
 echo "------------------"
 docker-compose ps
 
@@ -81,37 +81,18 @@ echo ""
 echo "🎉 Setup Complete!"
 echo "=================="
 echo ""
-echo "🌐 Access your applications:"
+echo "Access your applications:"
 echo "   • Open WebUI (Enhanced Chat): http://localhost:3001"
 echo "   • FastAPI Backend: http://localhost:8000"
 echo "   • API Documentation: http://localhost:8000/docs"
-echo ""
-echo "🔧 Optional services:"
-echo "   • pgAdmin (Database): http://localhost:5050 (run with --profile dev)"
-echo ""
-echo "📚 Documentation:"
-echo "   • Integration Guide: ./OPENWEBUI_INTEGRATION_GUIDE.md"
-echo "   • Setup Guide: ./SETUP_GUIDE.md"
-echo ""
-echo "🛠️  Quick Commands:"
-echo "   • View logs: docker-compose logs"
-echo "   • Stop services: docker-compose down"
-echo "   • Restart: docker-compose restart"
-echo ""
-echo "💡 First Steps:"
-echo "   1. Open http://localhost:3001 in your browser"
-echo "   2. Create an account (or skip if auth is disabled)"
-echo "   3. Try asking: 'What are the latest treatments for diabetes?'"
-echo "   4. Test PDF tool: 'Can you summarize this medical PDF?'"
-echo ""
 
 # Check if there are any failed services
 FAILED_SERVICES=$(docker-compose ps --services --filter "status=exited")
 if [ ! -z "$FAILED_SERVICES" ]; then
-    echo "⚠️  Some services failed to start:"
+    echo "Some services failed to start:"
     echo "$FAILED_SERVICES"
     echo ""
     echo "Check logs with: docker-compose logs [service-name]"
 fi
 
-echo "Happy chatting! 🚀"
+echo "Happy chatting! "
