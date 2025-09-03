@@ -69,10 +69,11 @@ services:
     container_name: chatapp_open_webui
     restart: unless-stopped
     environment:
-      - OLLAMA_BASE_URL=  # Leave empty if not using Ollama
+      - OLLAMA_BASE_URL=  
+      - ENABLE_OLLAMA=false
       - WEBUI_SECRET_KEY=your-medical-assistant-secret-key-change-this
-      - WEBUI_AUTH=false  # Set to true if you want authentication
-      - DEFAULT_MODELS=medical-assistant  # Your custom model name
+      - WEBUI_AUTH=false 
+      - DEFAULT_MODELS=medical-assistant  # custom model name
       - ENABLE_SIGNUP=true
       - ENABLE_LOGIN_FORM=true
       - WEBUI_NAME=Medical Assistant Chat
@@ -81,10 +82,10 @@ services:
       - ENABLE_MODEL_FILTER=true
       - BACKEND_URL=http://backend:8000
     ports:
-      - "3001:8080"  # Expose on port 3001 to avoid conflicts
+      - "3001:8080"  
     volumes:
       - open-webui-data:/app/backend/data
-      - ./pipelines:/app/backend/data/cache/pipelines:ro  # Mount your custom pipelines to the correct location
+      - ./pipelines:/app/backend/data/cache/pipelines:ro  
     depends_on:
       backend:
         condition: service_healthy
