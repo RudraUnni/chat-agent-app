@@ -2,16 +2,29 @@
 import os
 from agents import Agent as OpenAIAgent, Runner as OpenAIRunner, function_tool
 
-# Ensure OpenAI API key is available for the SDK
+# Ensure API key is available for the SDK (updated for OpenRouter)
 def _ensure_api_key():
-    """Ensure OpenAI API key is set in environment"""
+    """Ensure API key is set in environment for OpenRouter compatibility"""
+    # OpenAI API key handling (commented out for OpenRouter migration)
+    # if not os.getenv("OPENAI_API_KEY"):
+    #     # Try to load from config
+    #     try:
+    #         from app.core.config import get_settings
+    #         settings = get_settings()
+    #         if settings.openai_api_key:
+    #             os.environ["OPENAI_API_KEY"] = settings.openai_api_key
+    #     except Exception:
+    #         pass
+    
+    # Set OpenRouter API key as OPENAI_API_KEY for compatibility
     if not os.getenv("OPENAI_API_KEY"):
-        # Try to load from config
         try:
             from app.core.config import get_settings
             settings = get_settings()
-            if settings.openai_api_key:
-                os.environ["OPENAI_API_KEY"] = settings.openai_api_key
+            if settings.openrouter_api_key:
+                os.environ["OPENAI_API_KEY"] = settings.openrouter_api_key
+                # Also set the base URL for OpenRouter
+                os.environ["OPENAI_BASE_URL"] = settings.openrouter_base_url
         except Exception:
             pass
 

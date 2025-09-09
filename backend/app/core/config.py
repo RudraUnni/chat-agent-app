@@ -32,9 +32,14 @@ class Settings(BaseSettings):
     database_password: str = "chatapp_password"
     
     # LLM Configuration
-    openai_api_key: Optional[str] = None
-    default_llm_model: str = "gpt-4o-mini"
-    default_llm_provider: str = "openai"
+    # OpenAI Configuration (commented out for OpenRouter migration)
+    # openai_api_key: Optional[str] = None
+    
+    # OpenRouter Configuration
+    openrouter_api_key: Optional[str] = None
+    openrouter_base_url: str = "https://openrouter.ai/api/v1"
+    default_llm_model: str = "openai/gpt-4o-mini"
+    default_llm_provider: str = "openrouter"
     
     # PubMed Configuration
     pubmed_max_results: int = 5

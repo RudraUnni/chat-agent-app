@@ -16,7 +16,15 @@ settings = get_settings()
 def get_llm_service():
     """Dependency for LLM service"""
     try:
-        if not settings.openai_api_key:
+        # OpenAI key check (commented out for OpenRouter migration)
+        # if not settings.openai_api_key:
+        #     raise ConfigurationError(
+        #         "No LLM API key configured",
+        #         error_code="MISSING_API_KEY"
+        #     )
+        
+        # OpenRouter key check
+        if not settings.openrouter_api_key:
             raise ConfigurationError(
                 "No LLM API key configured",
                 error_code="MISSING_API_KEY"

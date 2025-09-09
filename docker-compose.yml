@@ -8,7 +8,10 @@ services:
     restart: unless-stopped
     environment:
       - DATABASE_URL=postgresql://chatapp:chatapp_password@postgres:5432/chatapp_db
-      - OPENAI_API_KEY=${OPENAI_API_KEY:-}
+      # OpenAI API key (commented out for OpenRouter migration)
+      # - OPENAI_API_KEY=${OPENAI_API_KEY:-}
+      # OpenRouter API key
+      - OPENROUTER_API_KEY=${OPENROUTER_API_KEY:-}
       - ENVIRONMENT=production
     ports:
       - "8000:8000"
