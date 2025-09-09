@@ -75,7 +75,7 @@ services:
       
       # Configure OpenAI-compatible endpoint to your FastAPI backend
       - OPENAI_BASE_URL=http://backend:8000
-      - OPENAI_API_KEY=dummy-key  # Required by OpenWebUI, can be dummy since your backend doesn't require auth
+      - OPENAI_API_KEY=sk-dummy-key-for-openwebui  # Required by OpenWebUI, can be dummy since your backend doesn't require auth
       
       # WebUI Configuration
       - WEBUI_SECRET_KEY=your-medical-assistant-secret-key-change-this

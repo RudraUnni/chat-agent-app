@@ -203,6 +203,10 @@ async def get_models():
 class OpenAIChatMessage(BaseModel):
     role: str
     content: str
+    
+    class Config:
+        # Allow extra fields that OpenWebUI might send
+        extra = "allow"
 
 
 class OpenAIChatRequest(BaseModel):
@@ -211,6 +215,10 @@ class OpenAIChatRequest(BaseModel):
     stream: bool = False
     temperature: float = 0.7
     max_tokens: int = 1000
+    
+    class Config:
+        # Allow extra fields that OpenWebUI might send
+        extra = "allow"
 
 
 @router.post("/chat/completions")
@@ -222,6 +230,9 @@ async def openai_chat_completions(
     """
     OpenAI-compatible chat completions endpoint for Open WebUI integration
     """
+    logger.info(f"Received chat completions request for model: {request.model}")
+    logger.info(f"Request messages count: {len(request.messages)}")
+    
     try:
         # Convert OpenAI format to our internal format
         if not request.messages:
@@ -305,6 +316,9 @@ async def openai_chat_completions(
             error_message = format_workflow_error(result, workflow_name)
             raise HTTPException(status_code=500, detail=error_message)
             
+    except HTTPException as e:
+        logger.error(f"HTTP error in chat completions: {e.status_code} - {e.detail}")
+        raise e
     except Exception as e:
-        logger.error(f"OpenAI chat completions error: {str(e)}")
-        raise HTTPException(status_code=500, detail=str(e))
+        logger.error(f"Unexpected error in chat completions: {str(e)}", exc_info=True)
+        raise HTTPException(status_code=500, detail=f"Internal server error: {str(e)}")

@@ -52,12 +52,42 @@ async def root():
 async def health_check():
     return {"status": "healthy"}
 
+# Add OpenAI-compatible endpoints at root level for OpenWebUI discovery
+@app.get("/models")
+async def root_models():
+    """Root level models endpoint for OpenWebUI compatibility"""
+    return {
+        "object": "list",
+        "data": [
+            {
+                "id": "medical-assistant",
+                "object": "model",
+                "created": 1677610602,
+                "owned_by": "medical-assistant",
+                "permission": [],
+                "root": "medical-assistant",
+                "parent": None
+            },
+            {
+                "id": "pubmed-research",
+                "object": "model", 
+                "created": 1677610602,
+                "owned_by": "medical-assistant",
+                "permission": [],
+                "root": "pubmed-research",
+                "parent": None
+            }
+        ]
+    }
+
 # Include API router
 app.include_router(api_router, prefix="/api/v1")
 
-# Include OpenAI-compatible endpoints at root level for OpenWebUI compatibility
+# Include OpenAI-compatible endpoints for OpenWebUI at multiple paths
 from app.api.v1.chat import router as chat_router
-app.include_router(chat_router, prefix="", tags=["openai-compat"])
+app.include_router(chat_router, prefix="/v1", tags=["openai-v1"])  # Standard OpenAI path
+app.include_router(chat_router, prefix="/api", tags=["openai-api"])  # What OpenWebUI is calling
+app.include_router(chat_router, prefix="", tags=["openai-root"])  # Root level as backup
 
 # Include WebSocket directly (not under API prefix)
 from app.api.v1.websocket import router as websocket_router
