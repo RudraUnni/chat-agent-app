@@ -69,17 +69,27 @@ services:
     container_name: chatapp_open_webui
     restart: unless-stopped
     environment:
-      - OLLAMA_BASE_URL=  
+      # Disable Ollama completely
+      - OLLAMA_BASE_URL=
       - ENABLE_OLLAMA=false
+      
+      # Configure OpenAI-compatible endpoint to your FastAPI backend
+      - OPENAI_BASE_URL=http://backend:8000
+      - OPENAI_API_KEY=dummy-key  # Required by OpenWebUI, can be dummy since your backend doesn't require auth
+      
+      # WebUI Configuration
       - WEBUI_SECRET_KEY=your-medical-assistant-secret-key-change-this
       - WEBUI_AUTH=false 
-      - DEFAULT_MODELS=medical-assistant  # custom model name
+      - DEFAULT_MODELS=medical-assistant,pubmed-research  # Match your backend models
       - ENABLE_SIGNUP=true
       - ENABLE_LOGIN_FORM=true
       - WEBUI_NAME=Medical Assistant Chat
       - ENABLE_COMMUNITY_SHARING=false
       - ENABLE_MESSAGE_RATING=true
       - ENABLE_MODEL_FILTER=true
+      
+      # Additional configuration to ensure proper routing
+      - ENABLE_OPENAI_API=true
       - BACKEND_URL=http://backend:8000
     ports:
       - "3001:8080"  

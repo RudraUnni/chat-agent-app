@@ -55,6 +55,10 @@ async def health_check():
 # Include API router
 app.include_router(api_router, prefix="/api/v1")
 
+# Include OpenAI-compatible endpoints at root level for OpenWebUI compatibility
+from app.api.v1.chat import router as chat_router
+app.include_router(chat_router, prefix="", tags=["openai-compat"])
+
 # Include WebSocket directly (not under API prefix)
 from app.api.v1.websocket import router as websocket_router
 app.include_router(websocket_router, prefix="/ws")
