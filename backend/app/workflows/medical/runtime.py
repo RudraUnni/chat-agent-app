@@ -1,4 +1,4 @@
-# Compatibility shim for OpenAI Agents SDK
+# Compatibility shim for OpenAI Agents SDK (configured for OpenRouter)
 import os
 from agents import Agent as OpenAIAgent, Runner as OpenAIRunner, function_tool
 
@@ -33,7 +33,7 @@ _ensure_api_key()
 
 
 class Agent(OpenAIAgent):
-    """Wrapper to maintain backward compatibility while using OpenAI Agents SDK"""
+    """Wrapper to maintain backward compatibility while using OpenAI Agents SDK (configured for OpenRouter)"""
     
     def __init__(self, *args, **kwargs):
         """Initialize agent and ensure API key is set"""
@@ -41,7 +41,7 @@ class Agent(OpenAIAgent):
         super().__init__(*args, **kwargs)
     
     async def invoke(self, user_input: str, conversation_history: list = None, **kwargs) -> str:
-        """Async wrapper for OpenAI Agent execution with conversation history"""
+        """Async wrapper for OpenAI Agent execution with conversation history (via OpenRouter)"""
         if conversation_history:
             # Format conversation history for the agent
             # The OpenAI Agents SDK expects a specific format for conversation history
@@ -101,7 +101,7 @@ class Agent(OpenAIAgent):
 
 
 class Runner(OpenAIRunner):
-    """Compatibility wrapper for OpenAI Runner"""
+    """Compatibility wrapper for OpenAI Runner (configured for OpenRouter)"""
     pass
 
 

@@ -11,7 +11,8 @@ search_agent = Agent(
         "Always interpret and explain the search results in a helpful way."
     ),
     tools=[search_pubmed],
-    model="gpt-4o-mini",
+    # Updated for OpenRouter compatibility (was "gpt-4o-mini")
+    model="openai/gpt-4o-mini",
 )
 
 reader_agent = Agent(
@@ -22,7 +23,8 @@ reader_agent = Agent(
         "key findings, and conclusions. Always explain the paper's significance."
     ),
     tools=[get_paper],
-    model="gpt-4o-mini",
+    # Updated for OpenRouter compatibility (was "gpt-4o-mini")
+    model="openai/gpt-4o-mini",
 )
 
 orchestrator = Agent(
@@ -35,7 +37,8 @@ orchestrator = Agent(
         "Synthesize the information into clear, actionable insights."
     ),
     handoffs=[search_agent, reader_agent],
-    model="gpt-4o-mini",
+    # Updated for OpenRouter compatibility (was "gpt-4o-mini")
+    model="openai/gpt-4o-mini",
 )
 
 
