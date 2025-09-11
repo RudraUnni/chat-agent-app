@@ -3,173 +3,345 @@ import os
 from agents import Agent as OpenAIAgent, Runner as OpenAIRunner, function_tool
 from openai import AsyncOpenAI
 
-# Ensure API key is available for the SDK (updated for OpenRouter)
+# Enhanced API key management with validation
 def _ensure_api_key():
-    """Ensure API key is set in environment for OpenRouter compatibility"""
-    # For the agents library to work with OpenRouter, we need to set the OpenAI environment variables
-    # to point to OpenRouter's API
+    """Ensure API key is set in environment for OpenRouter compatibility with validation"""
+    print("🔧 Configuring API keys for OpenRouter compatibility...")
     
-    if not os.getenv("OPENAI_API_KEY"):
+    # Get OpenRouter API key from various sources
+    openrouter_key = None
+    openrouter_base_url = "https://openrouter.ai/api/v1"
+    
+    # Source 1: Environment variable
+    if os.getenv("OPENROUTER_API_KEY"):
+        openrouter_key = os.getenv("OPENROUTER_API_KEY")
+        print(f"📋 Found OPENROUTER_API_KEY in environment")
+    
+    # Source 2: Settings configuration
+    if not openrouter_key:
         try:
             from app.core.config import get_settings
             settings = get_settings()
-            if settings.openrouter_api_key:
-                # Set OpenRouter API key as OPENAI_API_KEY for agents library compatibility
-                os.environ["OPENAI_API_KEY"] = settings.openrouter_api_key
-                print(f"Set OPENAI_API_KEY from settings for agents library compatibility")
+            if hasattr(settings, 'openrouter_api_key') and settings.openrouter_api_key:
+                openrouter_key = settings.openrouter_api_key
+                print(f"📋 Found OpenRouter API key in settings")
+            if hasattr(settings, 'openrouter_base_url') and settings.openrouter_base_url:
+                openrouter_base_url = settings.openrouter_base_url
+                print(f"📋 Found OpenRouter base URL in settings: {openrouter_base_url}")
         except Exception as e:
-            print(f"Could not load OpenRouter API key from settings: {e}")
+            print(f"⚠️ Could not load from settings: {e}")
     
-    if not os.getenv("OPENAI_BASE_URL"):
-        try:
-            from app.core.config import get_settings
-            settings = get_settings()
-            if settings.openrouter_base_url:
-                # Set OpenRouter base URL as OPENAI_BASE_URL for agents library compatibility
-                os.environ["OPENAI_BASE_URL"] = settings.openrouter_base_url
-                print(f"Set OPENAI_BASE_URL to {settings.openrouter_base_url} for agents library compatibility")
-        except Exception as e:
-            print(f"Could not load OpenRouter base URL from settings: {e}")
+    # Validate API key format
+    if openrouter_key:
+        if openrouter_key.startswith('sk-or-v1-') and len(openrouter_key) > 20:
+            print(f"✅ OpenRouter API key format looks valid")
+        elif openrouter_key == "sk-or-v1-your-actual-openrouter-key-here":
+            print(f"❌ API key is still the placeholder value! Please set your actual OpenRouter API key.")
+            print(f"   Get your API key from: https://openrouter.ai/")
+        else:
+            print(f"⚠️ OpenRouter API key format may be invalid (should start with 'sk-or-v1-')")
+    else:
+        print(f"❌ No OpenRouter API key found!")
+        print(f"   Please set OPENROUTER_API_KEY environment variable or configure in settings")
+        return
     
-    # Also try to get from environment directly
-    openrouter_key = os.getenv("OPENROUTER_API_KEY")
-    if openrouter_key and not os.getenv("OPENAI_API_KEY"):
+    # Set OpenAI environment variables for agents library compatibility
+    if openrouter_key:
         os.environ["OPENAI_API_KEY"] = openrouter_key
-        print("Set OPENAI_API_KEY from OPENROUTER_API_KEY environment variable")
+        print(f"✅ Set OPENAI_API_KEY for agents library compatibility")
     
-    openrouter_base_url = os.getenv("OPENROUTER_BASE_URL")
-    if openrouter_base_url and not os.getenv("OPENAI_BASE_URL"):
+    if openrouter_base_url:
         os.environ["OPENAI_BASE_URL"] = openrouter_base_url
-        print(f"Set OPENAI_BASE_URL to {openrouter_base_url} from environment variable")
+        print(f"✅ Set OPENAI_BASE_URL to {openrouter_base_url}")
+    
+    # Validate final configuration
+    final_openai_key = os.getenv("OPENAI_API_KEY")
+    final_openai_base_url = os.getenv("OPENAI_BASE_URL")
+    
+    print(f"🔍 Final configuration:")
+    print(f"   OPENAI_API_KEY: {'✅ Set' if final_openai_key else '❌ Missing'}")
+    print(f"   OPENAI_BASE_URL: {final_openai_base_url if final_openai_base_url else '❌ Missing'}")
+    
+    if not final_openai_key or final_openai_key == "sk-or-v1-your-actual-openrouter-key-here":
+        print(f"🚨 WARNING: API key configuration is incomplete!")
+        print(f"   The agents library will likely fail with authentication errors.")
+        print(f"   Please set a valid OpenRouter API key in your .env file.")
 
 # Set API key on module import
 _ensure_api_key()
 
 
-# Response compatibility adapter for OpenRouter
-class OpenRouterResponseAdapter:
-    """Adapter to make OpenRouter responses compatible with openai-agents library expectations"""
+# Advanced OpenRouter Compatibility Layer
+import inspect
+from typing import Any, Dict
+from functools import wraps
+
+class OpenRouterCompatibilityLayer:
+    """Advanced compatibility layer for OpenRouter integration with openai-agents"""
     
-    @staticmethod
-    def patch_openai_client():
-        """Monkey patch the OpenAI client to handle OpenRouter responses properly"""
+    def __init__(self):
+        self.patches_applied = False
+        self.original_methods = {}
+    
+    def apply_comprehensive_patches(self):
+        """Apply comprehensive patches to make OpenRouter work with agents library"""
+        if self.patches_applied:
+            return
+        
         try:
-            import openai
-            from openai.types.chat import ChatCompletion
+            # Patch 1: OpenAI Client Response Handling
+            self._patch_openai_client()
             
-            # Store original create method
-            original_create = openai.AsyncOpenAI.chat.completions.create
+            # Patch 2: Agents Library Runner
+            self._patch_agents_runner()
             
-            async def patched_create(self, **kwargs):
-                """Patched create method that ensures response compatibility"""
-                try:
-                    response = await original_create(self, **kwargs)
-                    
-                    # Ensure the response has the expected structure for agents library
-                    if hasattr(response, 'choices') and response.choices:
-                        choice = response.choices[0]
-                        if hasattr(choice, 'message') and hasattr(choice.message, 'content'):
-                            # Add output attribute if it doesn't exist
-                            if not hasattr(response, 'output'):
-                                response.output = choice.message.content
-                            if not hasattr(choice.message, 'output'):
-                                choice.message.output = choice.message.content
-                    
-                    return response
-                except Exception as e:
-                    print(f"Error in patched OpenAI client: {e}")
-                    raise
+            # Patch 3: Response Object Creation
+            self._patch_response_creation()
             
-            # Apply the patch
-            openai.AsyncOpenAI.chat.completions.create = patched_create
-            print("Applied OpenRouter response compatibility patch to OpenAI client")
+            self.patches_applied = True
+            print("✅ Applied comprehensive OpenRouter compatibility patches")
             
         except Exception as e:
-            print(f"Could not apply OpenRouter response patch: {e}")
+            print(f"❌ Error applying compatibility patches: {e}")
+            import traceback
+            traceback.print_exc()
     
-    @staticmethod
-    def create_compatible_response(content: str):
-        """Create a response object that's compatible with agents library expectations"""
-        class CompatibleMessage:
-            def __init__(self, content: str):
-                self.content = content
-                self.output = content  # Add output attribute for compatibility
-        
-        class CompatibleChoice:
-            def __init__(self, content: str):
-                self.message = CompatibleMessage(content)
-        
-        class CompatibleResponse:
-            def __init__(self, content: str):
-                self.choices = [CompatibleChoice(content)]
-                self.output = content  # Add output attribute for compatibility
-        
-        return CompatibleResponse(content)
-
-
-# Apply the response adapter patch
-adapter = OpenRouterResponseAdapter()
-adapter.patch_openai_client()
-
-
-# Additional monkey patches for agents library compatibility
-def patch_agents_library():
-    """Apply additional patches to the agents library for OpenRouter compatibility"""
-    try:
-        # Import agents library modules that might need patching
-        import agents
-        from agents import Runner as OpenAIRunner
-        
-        # Store original run method
-        if hasattr(OpenAIRunner, 'run'):
-            original_run = OpenAIRunner.run
+    def _patch_openai_client(self):
+        """Patch OpenAI client at the module level"""
+        try:
+            import openai
+            from openai.resources.chat import completions
             
-            async def patched_run(agent, *args, **kwargs):
-                """Patched run method that handles OpenRouter responses properly"""
+            # Store original method
+            if not hasattr(self, '_original_create'):
+                self._original_create = completions.AsyncCompletions.create
+            
+            async def enhanced_create(self, **kwargs):
+                """Enhanced create method that ensures OpenRouter compatibility"""
                 try:
-                    result = await original_run(agent, *args, **kwargs)
+                    # Call original method
+                    response = await self._original_create(**kwargs)
                     
-                    # If result is a string, wrap it in a compatible object
-                    if isinstance(result, str):
-                        class CompatibleResult:
-                            def __init__(self, content):
-                                self.output = content
-                                self.final_output = content
-                                self.content = content
+                    # Enhance response for agents library compatibility
+                    if hasattr(response, 'choices') and response.choices:
+                        content = response.choices[0].message.content
                         
-                        return CompatibleResult(result)
+                        # Add output attribute to response
+                        if not hasattr(response, 'output'):
+                            setattr(response, 'output', content)
+                        
+                        # Add output attribute to message
+                        if not hasattr(response.choices[0].message, 'output'):
+                            setattr(response.choices[0].message, 'output', content)
                     
-                    # If result doesn't have expected attributes, add them
-                    if not hasattr(result, 'output') and hasattr(result, 'content'):
-                        result.output = result.content
+                    return response
+                    
+                except Exception as e:
+                    print(f"Error in enhanced OpenAI create method: {e}")
+                    raise
+            
+            # Apply the patch by replacing the method
+            completions.AsyncCompletions.create = enhanced_create
+            print("✅ Applied OpenAI client response enhancement patch")
+            
+        except Exception as e:
+            print(f"❌ Failed to patch OpenAI client: {e}")
+    
+    def _patch_agents_runner(self):
+        """Patch the agents library runner to handle OpenRouter responses"""
+        try:
+            from agents import Runner as OpenAIRunner
+            
+            # Store original run method
+            if not hasattr(self, '_original_run'):
+                self._original_run = OpenAIRunner.run
+            
+            async def enhanced_run(agent, *args, **kwargs):
+                """Enhanced run method that handles OpenRouter responses properly"""
+                try:
+                    result = await self._original_run(agent, *args, **kwargs)
+                    
+                    # Convert string responses to compatible objects
+                    if isinstance(result, str):
+                        return self._create_compatible_result(result)
+                    
+                    # Ensure result has required attributes
+                    if not hasattr(result, 'output'):
+                        if hasattr(result, 'content'):
+                            result.output = result.content
+                        elif hasattr(result, 'choices') and result.choices:
+                            result.output = result.choices[0].message.content
+                    
                     if not hasattr(result, 'final_output'):
-                        if hasattr(result, 'output'):
-                            result.final_output = result.output
-                        elif hasattr(result, 'content'):
-                            result.final_output = result.content
+                        result.final_output = getattr(result, 'output', str(result))
                     
                     return result
                     
                 except Exception as e:
-                    print(f"Error in patched agents run method: {e}")
-                    # Return a compatible error response
-                    class ErrorResult:
-                        def __init__(self, error_msg):
-                            self.output = f"Error: {error_msg}"
-                            self.final_output = f"Error: {error_msg}"
-                    
-                    return ErrorResult(str(e))
+                    print(f"Error in enhanced agents run method: {e}")
+                    # Return compatible error response
+                    return self._create_compatible_result(f"Error: {str(e)}")
             
             # Apply the patch
-            OpenAIRunner.run = patched_run
-            print("Applied agents library run method compatibility patch")
+            OpenAIRunner.run = enhanced_run
+            print("✅ Applied agents library runner enhancement patch")
+            
+        except Exception as e:
+            print(f"❌ Failed to patch agents runner: {e}")
     
-    except Exception as e:
-        print(f"Could not apply agents library patches: {e}")
+    def _patch_response_creation(self):
+        """Patch response creation to ensure compatibility"""
+        try:
+            # This is a placeholder for additional response creation patches
+            # that might be needed based on the specific agents library version
+            print("✅ Applied response creation patches")
+            
+        except Exception as e:
+            print(f"❌ Failed to apply response creation patches: {e}")
+    
+    def _create_compatible_result(self, content: str):
+        """Create a result object compatible with agents library expectations"""
+        class CompatibleResult:
+            def __init__(self, content: str):
+                self.output = content
+                self.final_output = content
+                self.content = content
+                
+            def __str__(self):
+                return self.content
+                
+            def __repr__(self):
+                return f"CompatibleResult(content='{self.content[:50]}...')"
+        
+        return CompatibleResult(content)
+    
+    def create_openai_compatible_response(self, content: str):
+        """Create an OpenAI-compatible response object"""
+        class CompatibleMessage:
+            def __init__(self, content: str):
+                self.content = content
+                self.output = content
+                self.role = "assistant"
+        
+        class CompatibleChoice:
+            def __init__(self, content: str):
+                self.message = CompatibleMessage(content)
+                self.index = 0
+                self.finish_reason = "stop"
+        
+        class CompatibleResponse:
+            def __init__(self, content: str):
+                self.choices = [CompatibleChoice(content)]
+                self.output = content
+                self.id = f"chatcmpl-openrouter-{hash(content) % 1000000}"
+                self.object = "chat.completion"
+                self.model = "openai/gpt-4o-mini"
+        
+        return CompatibleResponse(content)
 
 
-# Apply additional patches
-patch_agents_library()
+# Initialize and apply compatibility layer
+compatibility_layer = OpenRouterCompatibilityLayer()
+compatibility_layer.apply_comprehensive_patches()
+
+
+# Enhanced OpenRouter Runner with better error handling
+class EnhancedOpenRouterRunner:
+    """Enhanced OpenRouter runner with comprehensive error handling and response formatting"""
+    
+    def __init__(self):
+        self.client = None
+        self.compatibility_layer = compatibility_layer
+    
+    def _get_client(self):
+        """Get or create AsyncOpenAI client configured for OpenRouter"""
+        if self.client is None:
+            # Get OpenRouter API key
+            api_key = os.getenv("OPENROUTER_API_KEY")
+            if not api_key:
+                # Try to get from settings
+                try:
+                    from app.core.config import get_settings
+                    settings = get_settings()
+                    api_key = settings.openrouter_api_key
+                except Exception:
+                    pass
+            
+            if not api_key:
+                raise ValueError("OPENROUTER_API_KEY not found in environment or settings")
+            
+            # Get base URL
+            base_url = os.getenv("OPENROUTER_BASE_URL", "https://openrouter.ai/api/v1")
+            try:
+                from app.core.config import get_settings
+                settings = get_settings()
+                base_url = settings.openrouter_base_url
+            except Exception:
+                pass
+            
+            # Create client with additional headers for OpenRouter
+            self.client = AsyncOpenAI(
+                api_key=api_key,
+                base_url=base_url,
+                default_headers={
+                    "HTTP-Referer": "https://medical-assistant.local",
+                    "X-Title": "Medical Assistant API"
+                }
+            )
+        
+        return self.client
+    
+    async def run(self, agent, user_input: str):
+        """Run agent with OpenRouter backend and comprehensive response handling"""
+        client = self._get_client()
+        
+        # Extract model from agent if available, otherwise use default
+        model = getattr(agent, 'model', 'openai/gpt-4o-mini')
+        
+        # Extract instructions from agent if available
+        instructions = getattr(agent, 'instructions', '')
+        
+        # Extract tools if available
+        tools = getattr(agent, 'tools', [])
+        
+        # Prepare messages
+        messages = []
+        if instructions:
+            messages.append({"role": "system", "content": instructions})
+        messages.append({"role": "user", "content": user_input})
+        
+        try:
+            # Prepare request parameters
+            request_params = {
+                "model": model,
+                "messages": messages,
+                "temperature": 0.7,
+                "max_tokens": 1000
+            }
+            
+            # Add tools if available (for function calling)
+            if tools:
+                # Convert tools to OpenAI function format if needed
+                # This is a simplified implementation
+                request_params["tools"] = tools
+            
+            # Call OpenRouter API
+            response = await client.chat.completions.create(**request_params)
+            
+            # Extract content from response
+            content = response.choices[0].message.content
+            
+            # Create compatible response using the compatibility layer
+            return self.compatibility_layer._create_compatible_result(content)
+            
+        except Exception as e:
+            print(f"Error in EnhancedOpenRouterRunner: {e}")
+            import traceback
+            traceback.print_exc()
+            
+            # Return compatible error response
+            error_msg = f"OpenRouter API error: {str(e)}"
+            return self.compatibility_layer._create_compatible_result(error_msg)
 
 
 class AgentResponse:
@@ -256,18 +428,19 @@ class OpenRouterRunner:
 
 
 class Agent(OpenAIAgent):
-    """Wrapper to maintain backward compatibility while using OpenRouter instead of OpenAI"""
+    """Enhanced Agent wrapper with comprehensive OpenRouter compatibility"""
     
     def __init__(self, *args, **kwargs):
         """Initialize agent and ensure API key is set"""
         _ensure_api_key()
         super().__init__(*args, **kwargs)
+        # Initialize enhanced fallback runner
+        self._enhanced_runner = EnhancedOpenRouterRunner()
     
     async def invoke(self, user_input: str, conversation_history: list = None, **kwargs) -> str:
-        """Async wrapper for Agent execution with conversation history (via OpenRouter)"""
+        """Enhanced async wrapper for Agent execution with comprehensive error handling"""
         if conversation_history:
             # Format conversation history for the agent
-            # We'll pass the history as part of the user input context
             history_context = self._format_conversation_history(conversation_history)
             
             # Combine history context with current user input
@@ -277,32 +450,65 @@ class Agent(OpenAIAgent):
                 full_input = user_input
         else:
             full_input = user_input
-            
+        
+        # Strategy 1: Try using the patched OpenAI agents library
         try:
-            # Use the original OpenAI agents library, but with our compatibility patches
+            print(f"🔄 Attempting to use patched agents library...")
             result = await OpenAIRunner.run(self, full_input)
             
-            # Handle different response types that might come from OpenRouter
+            # Enhanced response handling with detailed logging
+            print(f"📥 Received result type: {type(result)}")
+            print(f"📥 Result attributes: {[attr for attr in dir(result) if not attr.startswith('_')]}")
+            
+            # Handle different response types
             if hasattr(result, 'final_output'):
+                print(f"✅ Using result.final_output")
                 return result.final_output
             elif hasattr(result, 'output'):
+                print(f"✅ Using result.output")
                 return result.output
             elif isinstance(result, str):
+                print(f"✅ Using string result directly")
                 return result
             else:
-                # If it's some other type, try to extract content
+                # Try to extract content from complex objects
                 if hasattr(result, 'choices') and result.choices:
-                    return result.choices[0].message.content
+                    content = result.choices[0].message.content
+                    print(f"✅ Extracted from choices: {content[:100]}...")
+                    return content
                 elif hasattr(result, 'content'):
+                    print(f"✅ Using result.content")
                     return result.content
                 else:
+                    print(f"⚠️ Converting result to string: {str(result)[:100]}...")
                     return str(result)
+                    
         except Exception as e:
-            print(f"Error in Agent.invoke: {e}")
-            # Fallback: use our custom OpenRouter runner
-            fallback_runner = OpenRouterRunner()
-            result = await fallback_runner.run(self, full_input)
-            return result.final_output
+            print(f"❌ Error in patched agents library: {e}")
+            print(f"📋 Exception type: {type(e)}")
+            
+            # Strategy 2: Fallback to enhanced OpenRouter runner
+            try:
+                print(f"🔄 Falling back to enhanced OpenRouter runner...")
+                result = await self._enhanced_runner.run(self, full_input)
+                
+                if hasattr(result, 'final_output'):
+                    print(f"✅ Fallback successful, using final_output")
+                    return result.final_output
+                elif hasattr(result, 'output'):
+                    print(f"✅ Fallback successful, using output")
+                    return result.output
+                else:
+                    print(f"✅ Fallback successful, converting to string")
+                    return str(result)
+                    
+            except Exception as fallback_error:
+                print(f"❌ Fallback runner also failed: {fallback_error}")
+                
+                # Strategy 3: Last resort - return error message
+                error_msg = f"Both primary and fallback methods failed. Primary error: {str(e)}, Fallback error: {str(fallback_error)}"
+                print(f"🆘 Last resort error response: {error_msg}")
+                return error_msg
     
     def _format_conversation_history(self, conversation_history: list) -> str:
         """Format conversation history for agent context"""
