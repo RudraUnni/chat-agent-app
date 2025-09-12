@@ -6,6 +6,8 @@ services:
       dockerfile: Dockerfile
     container_name: chatapp_backend
     restart: unless-stopped
+    env_file:
+      - .env
     environment:
       - DATABASE_URL=postgresql://chatapp:chatapp_password@postgres:5432/chatapp_db
       # OpenRouter Configuration

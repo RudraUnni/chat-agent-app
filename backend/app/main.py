@@ -2,7 +2,7 @@
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 from contextlib import asynccontextmanager
-
+from app.workflows.medical.runtime import Agent
 from app.api.v1.router import api_router
 from app.database.connection import init_db, close_db
 from app.core.config import get_settings
