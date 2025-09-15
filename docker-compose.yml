@@ -1,28 +1,4 @@
 services:
-  # FastAPI Backend Service
-  backend:
-    build:
-      context: ./backend
-      dockerfile: Dockerfile
-    container_name: chatapp_backend
-    restart: unless-stopped
-    environment:
-      - DATABASE_URL=postgresql://chatapp:chatapp_password@postgres:5432/chatapp_db
-      - OPENAI_API_KEY=${OPENAI_API_KEY:-}
-      - ENVIRONMENT=production
-    ports:
-      - "8000:8000"
-    depends_on:
-      postgres:
-        condition: service_healthy
-    networks:
-      - chatapp-network
-    healthcheck:
-      test: ["CMD", "curl", "-f", "http://localhost:8000/health"]
-      interval: 30s
-      timeout: 10s
-      retries: 3
-
   postgres:
     image: postgres:15-alpine
     container_name: chatapp_postgres
@@ -63,48 +39,10 @@ services:
     profiles:
       - dev  # Only start with: docker-compose --profile dev up
 
-  # Open WebUI for enhanced chat interface
-  open-webui:
-    image: ghcr.io/open-webui/open-webui:v0.6.5
-    container_name: chatapp_open_webui
-    restart: unless-stopped
-    environment:
-      - OLLAMA_BASE_URL=  
-      - ENABLE_OLLAMA=false
-      - WEBUI_SECRET_KEY=your-medical-assistant-secret-key-change-this
-      - WEBUI_AUTH=false 
-      - DEFAULT_MODELS=medical-assistant  # custom model name
-      - ENABLE_SIGNUP=true
-      - ENABLE_LOGIN_FORM=true
-      - WEBUI_NAME=Medical Assistant Chat
-      - ENABLE_COMMUNITY_SHARING=false
-      - ENABLE_MESSAGE_RATING=true
-      - ENABLE_MODEL_FILTER=true
-      - BACKEND_URL=http://backend:8000
-    ports:
-      - "3001:8080"  
-    volumes:
-      - open-webui-data:/app/backend/data
-      - ./pipelines:/app/backend/data/cache/pipelines:ro  
-    depends_on:
-      backend:
-        condition: service_healthy
-      postgres:
-        condition: service_healthy
-    networks:
-      - chatapp-network
-    healthcheck:
-      test: ["CMD", "curl", "-f", "http://localhost:8080/health"]
-      interval: 30s
-      timeout: 10s
-      retries: 3
-
 volumes:
   postgres_data:
     driver: local
   pgadmin_data:
-    driver: local
-  open-webui-data:
     driver: local
 
 networks:

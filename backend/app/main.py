@@ -36,8 +36,10 @@ app.add_middleware(
     allow_origins=[
         "http://localhost:3000", 
         "http://localhost:5173",
-        "http://localhost:3001",  # Open WebUI
-        "http://open-webui:8080"  # Open WebUI container
+        "http://localhost:3001",  # Open WebUI local
+        "http://127.0.0.1:3001",  # Open WebUI local alternative
+        "http://localhost:8080",  # Open WebUI default port
+        "http://127.0.0.1:8080"   # Open WebUI default port alternative
     ],
     allow_credentials=True,
     allow_methods=["GET", "POST", "PUT", "DELETE", "OPTIONS"],

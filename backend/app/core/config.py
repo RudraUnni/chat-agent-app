@@ -18,7 +18,7 @@ class Settings(BaseSettings):
     api_prefix: str = "/api/v1"
     
     # CORS
-    cors_origins: str = '["http://localhost:3000", "http://localhost:5173"]'
+    cors_origins: str = '["http://localhost:3000", "http://localhost:5173", "http://localhost:3001", "http://127.0.0.1:3001"]'
     
     # Rate limiting
     rate_limit_requests: int = 100
