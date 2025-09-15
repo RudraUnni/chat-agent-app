@@ -14,7 +14,7 @@ class Pipeline:
     class Valves(BaseModel):
         SUMMARIZER_ENABLED: bool = True
         MAX_PDF_SIZE_MB: int = 10
-        FASTAPI_BASE_URL: str = "http://backend:8000"
+        FASTAPI_BASE_URL: str = "http://localhost:8000"  # Local development URL
         API_ENDPOINT: str = "/api/v1/chat"
         WORKFLOW: str = "pubmed_research"  # Use your medical workflow for summarization
         
