@@ -10,7 +10,8 @@ requests==2.31.0
 tenacity==8.2.3
 python-multipart>=0.0.9
 anyio>=4.5.0
-pydantic>=2.10.0,<3.0.0
+pydantic>=2.5.0,<3.0.0
+redis>=5.0.0
 
 # Database dependencies - using newer versions compatible with Python 3.13
 sqlalchemy[asyncio]==2.0.36

@@ -1,5 +1,6 @@
 from fastapi import APIRouter
 from app.api.v1 import chat
+from app.api.v1 import health
 
 # Create main API router
 api_router = APIRouter()
@@ -8,5 +9,6 @@ api_router = APIRouter()
 async def api_root():
     return {"message": "Chat Agent API v1"}
 
-# Include chat router
+# Include routers
 api_router.include_router(chat.router)
+api_router.include_router(health.router)

@@ -13,14 +13,16 @@ services:
       # OpenRouter Configuration
       - OPENROUTER_API_KEY=${OPENROUTER_API_KEY:-}
       - OPENROUTER_BASE_URL=${OPENROUTER_BASE_URL:-https://openrouter.ai/api/v1}
-      # OpenAI-compatible environment variables for agents library
-      - OPENAI_API_KEY=${OPENROUTER_API_KEY:-}
-      - OPENAI_BASE_URL=${OPENROUTER_BASE_URL:-https://openrouter.ai/api/v1}
+      # Redis Configuration
+      - REDIS_HOST=${REDIS_HOST:-redis}
+      - REDIS_PORT=${REDIS_PORT:-6379}
       - ENVIRONMENT=production
     ports:
       - "8000:8000"
     depends_on:
       postgres:
+        condition: service_healthy
+      redis:
         condition: service_healthy
     networks:
       - chatapp-network
@@ -70,6 +72,23 @@ services:
     profiles:
       - dev  # Only start with: docker-compose --profile dev up
 
+  # Redis for session persistence
+  redis:
+    image: redis:7-alpine
+    container_name: chatapp_redis
+    restart: unless-stopped
+    ports:
+      - "6379:6379"
+    volumes:
+      - redis_data:/data
+    networks:
+      - chatapp-network
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 10s
+      timeout: 5s
+      retries: 3
+
   # Open WebUI for enhanced chat interface
   open-webui:
     image: ghcr.io/open-webui/open-webui:v0.6.5
@@ -82,7 +101,7 @@ services:
       
       # Configure OpenAI-compatible endpoint to your FastAPI backend
       - OPENAI_BASE_URL=http://backend:8000
-      - OPENAI_API_KEY=sk-dummy-key-for-openwebui  # Required by OpenWebUI, can be dummy since your backend doesn't require auth
+      - OPENAI_API_KEY=dummy-key-for-openwebui  # Required by OpenWebUI, can be dummy since your backend doesn't require auth
       
       # WebUI Configuration
       - WEBUI_SECRET_KEY=your-medical-assistant-secret-key-change-this
@@ -108,6 +127,8 @@ services:
         condition: service_healthy
       postgres:
         condition: service_healthy
+      redis:
+        condition: service_healthy
     networks:
       - chatapp-network
     healthcheck:
@@ -120,6 +141,8 @@ volumes:
   postgres_data:
     driver: local
   pgadmin_data:
+    driver: local
+  redis_data:
     driver: local
   open-webui-data:
     driver: local

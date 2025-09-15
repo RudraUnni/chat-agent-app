@@ -13,25 +13,6 @@ class LLMFactory:
     def create(provider: str, api_key: Optional[str] = None) -> BaseLLMProvider:
         """Create an LLM provider instance"""
         
-        # OpenAI provider (commented out for OpenRouter migration)
-        # if provider == "openai":
-        #     from app.services.llm.openai import OpenAIProvider
-        #     key = api_key or settings.openai_api_key
-        #     if not key:
-        #         raise ConfigurationError(
-        #             "OpenAI API key not provided",
-        #             error_code="MISSING_API_KEY",
-        #             details={"provider": provider}
-        #         )
-        #     try:
-        #         return OpenAIProvider(key, settings.default_llm_model)
-        #     except Exception as e:
-        #         raise LLMError(
-        #             f"Failed to initialize OpenAI provider: {str(e)}",
-        #             error_code="PROVIDER_INIT_ERROR",
-        #             details={"provider": provider}
-        #         )
-        
         if provider == "openrouter":
             from app.services.llm.openrouter import OpenRouterProvider
             key = api_key or settings.openrouter_api_key
@@ -64,9 +45,6 @@ class LLMFactory:
     def get_available_providers():
         """Get list of available providers based on configured API keys"""
         providers = []
-        # OpenAI provider (commented out for OpenRouter migration)
-        # if settings.openai_api_key:
-        #     providers.append("openai")
         if settings.openrouter_api_key:
             providers.append("openrouter")
         return providers
