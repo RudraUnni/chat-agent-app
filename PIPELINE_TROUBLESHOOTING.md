@@ -4,42 +4,45 @@
 
 ### Root Causes Identified:
 
-1. **Services Not Running** - Docker/Docker Compose not available
+1. **Missing Pipelines Container** - OpenWebUI v0.6.5 requires a separate pipelines service
 2. **Incorrect Pipeline Mount Path** - Wrong directory mapping in docker-compose.yml
 3. **Pipeline Format Issues** - Incompatible with OpenWebUI v0.6.5
 4. **Configuration Conflicts** - Multiple conflicting endpoint configurations
 
 ### ✅ Fixes Applied:
 
-#### 1. Fixed Pipeline Mount Path
-**Before:**
+#### 1. Added Missing Pipelines Container
+**Added to docker-compose.yml:**
 ```yaml
-- ./pipelines:/app/backend/data/cache/pipelines:ro
-```
-**After:**
-```yaml
-- ./pipelines:/app/backend/data/functions:ro
+pipelines:
+  image: ghcr.io/open-webui/pipelines:main
+  container_name: chatapp_pipelines
+  environment:
+    - PIPELINES_API_KEY=medical-assistant-pipelines-key
+  volumes:
+    - ./pipelines:/app/pipelines:ro
+  ports:
+    - "9099:9099"
 ```
 
 #### 2. Updated OpenWebUI Configuration
-**Before:**
+**Added pipelines connection:**
 ```yaml
-- OPENAI_BASE_URL=http://backend:8000
-- BACKEND_URL=http://backend:8000
-```
-**After:**
-```yaml
+- PIPELINES_API_BASE_URL=http://pipelines:9099
+- PIPELINES_API_KEY=medical-assistant-pipelines-key
 - OPENAI_API_BASE_URL=http://backend:8000/v1
 ```
 
 #### 3. Fixed Pipeline Format
-Added required metadata to both pipeline files:
-- `self.id` - Unique pipeline identifier
-- `self.type = "function"` - Pipeline type for OpenWebUI v0.6.5
+Updated pipeline files to match OpenWebUI pipelines service format:
+- Simplified `pipe(body: dict)` function signature
+- Added proper Field descriptions for Valves
+- Removed obsolete async methods and complex message handling
 
 #### 4. Removed Obsolete Configuration
 - Deleted `pipelines.json` (not used in OpenWebUI v0.6.5)
 - Removed conflicting BACKEND_URL environment variable
+- Removed direct pipeline mounting to OpenWebUI container
 
 ---
 
@@ -73,6 +76,7 @@ docker compose ps
 
 # Check logs if needed
 docker compose logs open-webui
+docker compose logs pipelines
 docker compose logs backend
 ```
 
