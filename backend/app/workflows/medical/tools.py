@@ -4,7 +4,10 @@ from typing import List, Dict, Optional
 from .runtime import function_tool
 
 
-@function_tool
+@function_tool(
+    name="search_pubmed",
+    description="Search PubMed and return paper summaries with enhanced metadata."
+)
 def search_pubmed(query: str, max_results: int = 5) -> str:
     """Search PubMed and return paper summaries with enhanced metadata."""
     try:
@@ -38,7 +41,10 @@ def search_pubmed(query: str, max_results: int = 5) -> str:
         return f"Search error: {str(e)}"
 
 
-@function_tool
+@function_tool(
+    name="get_paper",
+    description="Get full text if available, otherwise return abstract with enhanced metadata."
+)
 def get_paper(pmid: str) -> str:
     """Get full text if available, otherwise return abstract with enhanced metadata."""
     try:
