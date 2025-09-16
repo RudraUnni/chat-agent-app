@@ -5,8 +5,8 @@
 
 set -e
 
-echo "🏥 Medical Assistant with Open WebUI - Quick Start"
-echo "=================================================="
+echo "🏥 Medical Assistant with OpenWebUI + OpenRouter - Quick Start"
+echo "=============================================================="
 
 # Check if docker-compose is available
 if ! command -v docker-compose &> /dev/null; then
@@ -82,9 +82,12 @@ echo "🎉 Setup Complete!"
 echo "=================="
 echo ""
 echo "Access your applications:"
-echo "   • Open WebUI (Enhanced Chat): http://localhost:3001"
+echo "   • OpenWebUI (Medical Chat): http://localhost:3001"
 echo "   • FastAPI Backend: http://localhost:8000"
 echo "   • API Documentation: http://localhost:8000/docs"
+echo "   • OpenAI-compatible endpoints: http://localhost:8000/v1/"
+echo ""
+echo "🔧 Architecture: OpenWebUI → FastAPI → OpenRouter → Medical Workflows"
 
 # Check if there are any failed services
 FAILED_SERVICES=$(docker-compose ps --services --filter "status=exited")

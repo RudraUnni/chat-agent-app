@@ -100,13 +100,13 @@ services:
       - ENABLE_OLLAMA=false
       
       # Configure OpenAI-compatible endpoint to your FastAPI backend
-      - OPENAI_BASE_URL=http://backend:8000
-      - OPENAI_API_KEY=dummy-key-for-openwebui  # Required by OpenWebUI, can be dummy since your backend doesn't require auth
+      - OPENAI_API_BASE_URL=http://backend:8000/v1
+      - OPENAI_API_KEY=dummy-key-for-fastapi  # Required by OpenWebUI, dummy key for your backend
       
       # WebUI Configuration
       - WEBUI_SECRET_KEY=your-medical-assistant-secret-key-change-this
       - WEBUI_AUTH=false 
-      - DEFAULT_MODELS=medical-assistant,pubmed-research  # Match your backend models
+      - DEFAULT_MODELS=openai/gpt-4o-mini,medical-assistant  # Updated model names
       - ENABLE_SIGNUP=true
       - ENABLE_LOGIN_FORM=true
       - WEBUI_NAME=Medical Assistant Chat
@@ -114,14 +114,12 @@ services:
       - ENABLE_MESSAGE_RATING=true
       - ENABLE_MODEL_FILTER=true
       
-      # Additional configuration to ensure proper routing
+      # Enable OpenAI API integration
       - ENABLE_OPENAI_API=true
-      - BACKEND_URL=http://backend:8000
     ports:
       - "3001:8080"  
     volumes:
       - open-webui-data:/app/backend/data
-      - ./pipelines:/app/backend/data/cache/pipelines:ro  
     depends_on:
       backend:
         condition: service_healthy

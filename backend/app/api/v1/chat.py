@@ -212,10 +212,29 @@ async def delete_session(session_id: str):
 async def get_models():
     """
     OpenAI-compatible endpoint for Open WebUI to discover available models
+    Returns OpenRouter models that work with our medical workflows
     """
     return {
         "object": "list",
         "data": [
+            {
+                "id": "openai/gpt-4o-mini",
+                "object": "model",
+                "created": 1677610602,
+                "owned_by": "openai",
+                "permission": [],
+                "root": "openai/gpt-4o-mini",
+                "parent": None
+            },
+            {
+                "id": "openai/gpt-4o",
+                "object": "model", 
+                "created": 1677610602,
+                "owned_by": "openai",
+                "permission": [],
+                "root": "openai/gpt-4o",
+                "parent": None
+            },
             {
                 "id": "medical-assistant",
                 "object": "model",
@@ -223,15 +242,6 @@ async def get_models():
                 "owned_by": "medical-assistant",
                 "permission": [],
                 "root": "medical-assistant",
-                "parent": None
-            },
-            {
-                "id": "pubmed-research",
-                "object": "model", 
-                "created": 1677610602,
-                "owned_by": "medical-assistant",
-                "permission": [],
-                "root": "pubmed-research",
                 "parent": None
             }
         ]
@@ -289,9 +299,8 @@ async def openai_chat_completions(
                 await add_message_to_session(session_id, msg.role, msg.content)
         
         # Determine workflow based on model name
-        workflow_name = "pubmed_research"  # Default
-        if "research" in request.model.lower():
-            workflow_name = "pubmed_research"
+        workflow_name = "pubmed_research"  # Default workflow for all models
+        # All models use the same medical workflow with OpenRouter backend
         
         # Get workflow
         workflow = workflow_registry.get_workflow(workflow_name)

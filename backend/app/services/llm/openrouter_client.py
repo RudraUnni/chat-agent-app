@@ -47,9 +47,16 @@ class OpenRouterClient:
             }
         )
         
-        # Set OpenAI environment variables for agents library compatibility
-        os.environ["OPENAI_API_KEY"] = self.api_key
-        os.environ["OPENAI_BASE_URL"] = self.base_url
+        # Store OpenRouter config internally - DO NOT override global OpenAI env vars
+        # This prevents conflicts with OpenWebUI which needs different OpenAI env vars
+        self._internal_openai_key = self.api_key
+        self._internal_openai_base_url = self.base_url
+        
+        # Only set OpenAI env vars if they're not already set (for agents library compatibility)
+        if not os.getenv("OPENAI_API_KEY"):
+            os.environ["OPENAI_API_KEY"] = self.api_key
+        if not os.getenv("OPENAI_BASE_URL"):
+            os.environ["OPENAI_BASE_URL"] = self.base_url
         
         logger.info(f"OpenRouter client initialized: {self.base_url}")
     

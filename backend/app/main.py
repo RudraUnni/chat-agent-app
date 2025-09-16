@@ -36,8 +36,11 @@ app.add_middleware(
     allow_origins=[
         "http://localhost:3000", 
         "http://localhost:5173",
-        "http://localhost:3001",  # Open WebUI
-        "http://open-webui:8080"  # Open WebUI container
+        "http://localhost:3001",  # Open WebUI local
+        "http://open-webui:8080",  # Open WebUI container internal
+        "http://chatapp_open_webui:8080",  # Open WebUI container name
+        "http://0.0.0.0:3001",  # Docker host binding
+        "*"  # Allow all origins for OpenWebUI compatibility
     ],
     allow_credentials=True,
     allow_methods=["GET", "POST", "PUT", "DELETE", "OPTIONS"],
@@ -60,21 +63,30 @@ async def root_models():
         "object": "list",
         "data": [
             {
+                "id": "openai/gpt-4o-mini",
+                "object": "model",
+                "created": 1677610602,
+                "owned_by": "openai",
+                "permission": [],
+                "root": "openai/gpt-4o-mini",
+                "parent": None
+            },
+            {
+                "id": "openai/gpt-4o",
+                "object": "model", 
+                "created": 1677610602,
+                "owned_by": "openai",
+                "permission": [],
+                "root": "openai/gpt-4o",
+                "parent": None
+            },
+            {
                 "id": "medical-assistant",
                 "object": "model",
                 "created": 1677610602,
                 "owned_by": "medical-assistant",
                 "permission": [],
                 "root": "medical-assistant",
-                "parent": None
-            },
-            {
-                "id": "pubmed-research",
-                "object": "model", 
-                "created": 1677610602,
-                "owned_by": "medical-assistant",
-                "permission": [],
-                "root": "pubmed-research",
                 "parent": None
             }
         ]
@@ -83,11 +95,9 @@ async def root_models():
 # Include API router
 app.include_router(api_router, prefix="/api/v1")
 
-# Include OpenAI-compatible endpoints for OpenWebUI at multiple paths
+# Include OpenAI-compatible endpoints for OpenWebUI
 from app.api.v1.chat import router as chat_router
-app.include_router(chat_router, prefix="/v1", tags=["openai-v1"])  # Standard OpenAI path
-app.include_router(chat_router, prefix="/api", tags=["openai-api"])  # What OpenWebUI is calling
-app.include_router(chat_router, prefix="", tags=["openai-root"])  # Root level as backup
+app.include_router(chat_router, prefix="/v1", tags=["openai-compatible"])  # Standard OpenAI path for OpenWebUI
 
 # Include WebSocket directly (not under API prefix)
 from app.api.v1.websocket import router as websocket_router
