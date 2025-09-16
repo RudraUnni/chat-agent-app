@@ -1,4 +1,4 @@
-from typing import List, Union, Generator, Iterator
+from typing import List, Union, Generator, Iterator, Optional
 import requests
 import json
 from pydantic import BaseModel
@@ -18,6 +18,8 @@ class Pipeline:
         
     def __init__(self):
         self.name = "Medical Assistant Pipeline"
+        self.id = "medical_assistant_pipeline"
+        self.type = "function"
         self.valves = self.Valves()
         logger.info(f"Initialized {self.name}")
 

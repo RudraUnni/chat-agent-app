@@ -20,6 +20,8 @@ class Pipeline:
         
     def __init__(self):
         self.name = "PDF Summarizer Tool"
+        self.id = "pdf_summarizer_pipeline"
+        self.type = "function"
         self.valves = self.Valves()
         logger.info(f"Initialized {self.name}")
 

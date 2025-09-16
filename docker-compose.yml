@@ -100,7 +100,7 @@ services:
       - ENABLE_OLLAMA=false
       
       # Configure OpenAI-compatible endpoint to your FastAPI backend
-      - OPENAI_BASE_URL=http://backend:8000
+      - OPENAI_API_BASE_URL=http://backend:8000/v1
       - OPENAI_API_KEY=dummy-key-for-openwebui  # Required by OpenWebUI, can be dummy since your backend doesn't require auth
       
       # WebUI Configuration
@@ -116,12 +116,11 @@ services:
       
       # Additional configuration to ensure proper routing
       - ENABLE_OPENAI_API=true
-      - BACKEND_URL=http://backend:8000
     ports:
       - "3001:8080"  
     volumes:
       - open-webui-data:/app/backend/data
-      - ./pipelines:/app/backend/data/cache/pipelines:ro  
+      - ./pipelines:/app/backend/data/functions:ro  
     depends_on:
       backend:
         condition: service_healthy
