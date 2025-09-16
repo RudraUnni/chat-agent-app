@@ -43,7 +43,20 @@ docker-compose up -d
 
 echo ""
 echo "Waiting for services to be ready..."
-sleep 10
+sleep 15
+
+# Setup pipelines after services are running
+echo ""
+echo "🔧 Setting up pipelines..."
+if [ -f "./setup-pipelines.sh" ]; then
+    ./setup-pipelines.sh
+else
+    echo "⚠️  Pipeline setup script not found"
+    echo "   Manually copy pipelines with:"
+    echo "   docker cp pipelines/medical_assistant_pipeline.py chatapp_pipelines:/app/pipelines/"
+    echo "   docker cp pipelines/pdf_summarizer_pipeline.py chatapp_pipelines:/app/pipelines/"
+    echo "   docker compose restart pipelines"
+fi
 
 # Check service status
 echo ""
