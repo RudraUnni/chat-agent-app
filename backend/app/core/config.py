@@ -24,12 +24,13 @@ class Settings(BaseSettings):
     rate_limit_requests: int = 100
     rate_limit_window: int = 3600
     
-    # Database
-    database_host: str = "localhost"
+    # Database - Updated to read from environment variables
+    database_host: str = "postgres"  # Changed from localhost to postgres
     database_port: int = 5432
     database_name: str = "chatapp_db"
     database_user: str = "chatapp"
     database_password: str = "chatapp_password"
+    database_url: Optional[str] = None  # Add support for DATABASE_URL env var
     
     # LLM Configuration - OpenRouter
     openrouter_api_key: Optional[str] = None
@@ -38,7 +39,7 @@ class Settings(BaseSettings):
     default_llm_provider: str = "openrouter"
     
     # Redis Configuration
-    redis_host: str = "localhost"
+    redis_host: str = "redis"  # Changed from localhost to redis
     redis_port: int = 6379
     
     # PubMed Configuration
@@ -50,8 +51,6 @@ class Settings(BaseSettings):
     api_host: Optional[str] = None
     api_port: Optional[str] = None
     session_expire_hours: Optional[str] = None
-    redis_host: Optional[str] = None
-    redis_port: Optional[str] = None
     
     @field_validator('pubmed_timeout', mode='before')
     @classmethod
@@ -72,6 +71,14 @@ class Settings(BaseSettings):
     @property
     def async_database_url(self) -> str:
         """Get async database URL for SQLAlchemy"""
+        # If DATABASE_URL is provided, convert it to async format
+        if self.database_url:
+            # Replace postgresql:// with postgresql+asyncpg://
+            if self.database_url.startswith("postgresql://"):
+                return self.database_url.replace("postgresql://", "postgresql+asyncpg://", 1)
+            return self.database_url
+        
+        # Otherwise, construct from individual components
         return f"postgresql+asyncpg://{self.database_user}:{self.database_password}@{self.database_host}:{self.database_port}/{self.database_name}"
 
 
@@ -87,5 +94,3 @@ def get_settings() -> Settings:
     return _settings
 
 settings = get_settings()
-    
-

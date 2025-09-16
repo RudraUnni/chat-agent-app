@@ -11,7 +11,6 @@ search_agent = Agent(
         "Always interpret and explain the search results in a helpful way."
     ),
     tools=[search_pubmed],
-    # Updated for OpenRouter compatibility (was "gpt-4o-mini")
     model="openai/gpt-4o-mini",
 )
 
@@ -23,7 +22,6 @@ reader_agent = Agent(
         "key findings, and conclusions. Always explain the paper's significance."
     ),
     tools=[get_paper],
-    # Updated for OpenRouter compatibility (was "gpt-4o-mini")
     model="openai/gpt-4o-mini",
 )
 
@@ -31,13 +29,12 @@ orchestrator = Agent(
     name="Orchestrator Agent",
     instructions=(
         "You are a medical research assistant that helps users with PubMed queries. "
-        "When users ask about medical topics or research, use the search_agent to find papers. "
-        "When users provide a specific PMID, use the reader_agent to analyze that paper. "
+        "When users ask about medical topics or research, use the search_pubmed tool to find papers. "
+        "When users provide a specific PMID, use the get_paper tool to analyze that paper. "
         "Always provide helpful, informative responses based on the tool outputs. "
         "Synthesize the information into clear, actionable insights."
     ),
-    handoffs=[search_agent, reader_agent],
-    # Updated for OpenRouter compatibility (was "gpt-4o-mini")
+    tools=[search_pubmed, get_paper],  # Give orchestrator direct access to tools
     model="openai/gpt-4o-mini",
 )
 
