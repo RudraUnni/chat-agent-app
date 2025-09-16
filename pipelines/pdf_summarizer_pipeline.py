@@ -1,49 +1,47 @@
-from typing import List, Union, Generator, Iterator
+from pydantic import BaseModel, Field
 import requests
 import json
-from pydantic import BaseModel
-import logging
-import re
-import base64
-
-# Set up logging
-logging.basicConfig(level=logging.INFO)
-logger = logging.getLogger(__name__)
 
 class Pipeline:
     class Valves(BaseModel):
-        SUMMARIZER_ENABLED: bool = True
-        MAX_PDF_SIZE_MB: int = 10
-        FASTAPI_BASE_URL: str = "http://backend:8000"
-        API_ENDPOINT: str = "/api/v1/chat"
-        WORKFLOW: str = "pubmed_research"  # Use your medical workflow for summarization
+        SUMMARIZER_ENABLED: bool = Field(default=True, description="Enable PDF summarizer")
+        FASTAPI_BASE_URL: str = Field(default="http://backend:8000", description="Backend FastAPI URL")
+        API_ENDPOINT: str = Field(default="/api/v1/chat", description="Chat API endpoint")
+        WORKFLOW: str = Field(default="pubmed_research", description="Medical workflow")
         
     def __init__(self):
-        self.name = "PDF Summarizer Tool"
+        self.name = "PDF Summarizer"
         self.valves = self.Valves()
-        logger.info(f"Initialized {self.name}")
 
-    async def on_startup(self):
-        logger.info(f"PDF Summarizer Tool starting up...")
-
-    async def on_shutdown(self):
-        logger.info(f"PDF Summarizer Tool shutting down...")
-
-    def pipe(
-        self, user_message: str, model_id: str, messages: List[dict], body: dict
-    ) -> Union[str, Generator, Iterator]:
+    def pipe(self, body: dict) -> str:
         """
         PDF summarization tool that integrates with your medical assistant workflow
         """
         if not self.valves.SUMMARIZER_ENABLED:
             return "PDF Summarizer is currently disabled"
             
-        # Check if message contains PDF-related keywords
-        pdf_keywords = ["pdf", "summarize", "summary", "document", "file", "paper", "article"]
-        message_lower = user_message.lower()
-        
-        if not any(keyword in message_lower for keyword in pdf_keywords):
-            return """**PDF Summarizer Tool**
+        try:
+            # Extract message from body
+            messages = body.get("messages", [])
+            if not messages:
+                return "No messages provided"
+            
+            # Get the last user message
+            user_message = ""
+            for msg in reversed(messages):
+                if msg.get("role") == "user":
+                    user_message = msg.get("content", "")
+                    break
+            
+            if not user_message:
+                return "No user message found"
+            
+            # Check if message contains PDF-related keywords
+            pdf_keywords = ["pdf", "summarize", "summary", "document", "file", "paper", "article"]
+            message_lower = user_message.lower()
+            
+            if not any(keyword in message_lower for keyword in pdf_keywords):
+                return """**PDF Summarizer Tool**
 
 This tool helps summarize PDF documents using your medical assistant.
 
@@ -61,9 +59,6 @@ This tool helps summarize PDF documents using your medical assistant.
 - Treatment protocol summaries
 
 Please rephrase your message to include PDF-related keywords to activate this tool."""
-        
-        try:
-            logger.info(f"Processing PDF summarization request")
             
             # Enhance the message for PDF summarization context
             enhanced_message = f"""PDF Summarization Request: {user_message}
@@ -81,7 +76,7 @@ If this is about a specific PDF document, please provide the document content or
             payload = {
                 "message": enhanced_message,
                 "workflow": self.valves.WORKFLOW,
-                "session_id": body.get("session_id"),
+                "session_id": f"pdf_pipeline_{hash(str(messages))}",
                 "parameters": {
                     "task_type": "document_summarization",
                     "focus": "medical_content",
@@ -96,33 +91,27 @@ If this is about a specific PDF document, please provide the document content or
                 f"{self.valves.FASTAPI_BASE_URL}{self.valves.API_ENDPOINT}",
                 json=payload,
                 headers=headers,
-                timeout=90  # Longer timeout for document processing
+                timeout=90
             )
             
             if response.status_code == 200:
                 result = response.json()
                 if result.get("success"):
                     summary = result.get("response", "")
-                    
-                    # Format the response with PDF tool branding
-                    formatted_response = f"""**📄 PDF Summarizer Tool - Medical Assistant Analysis**
+                    return f"""**📄 PDF Summarizer Tool - Medical Assistant Analysis**
 
 {summary}
 
 ---
 *Processed by Medical Assistant Workflow | Tool: PDF Summarizer*"""
-                    
-                    return formatted_response
                 else:
-                    error_msg = result.get("error", "Unknown error")
-                    return f"**PDF Summarizer Error:** {error_msg}"
+                    return f"**PDF Summarizer Error:** {result.get('error', 'Unknown error')}"
             else:
                 return f"**PDF Summarizer Error:** Unable to process request (HTTP {response.status_code})"
                 
         except requests.exceptions.Timeout:
-            return "**PDF Summarizer Timeout:** Document processing took too long. Please try with a smaller document or simpler request."
+            return "**PDF Summarizer Timeout:** Document processing took too long."
         except requests.exceptions.ConnectionError:
             return "**PDF Summarizer Error:** Unable to connect to the medical assistant backend."
         except Exception as e:
-            logger.error(f"PDF Summarizer error: {str(e)}")
             return f"**PDF Summarizer Error:** {str(e)}"

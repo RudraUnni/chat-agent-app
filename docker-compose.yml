@@ -89,6 +89,25 @@ services:
       timeout: 5s
       retries: 3
 
+  # Pipelines service for OpenWebUI functions
+  pipelines:
+    image: ghcr.io/open-webui/pipelines:main
+    container_name: chatapp_pipelines
+    restart: unless-stopped
+    environment:
+      - PIPELINES_API_KEY=medical-assistant-pipelines-key
+    volumes:
+      - pipelines-data:/app/pipelines
+    ports:
+      - "9099:9099"
+    networks:
+      - chatapp-network
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:9099/health"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+
   # Open WebUI for enhanced chat interface
   open-webui:
     image: ghcr.io/open-webui/open-webui:v0.6.5
@@ -100,8 +119,12 @@ services:
       - ENABLE_OLLAMA=false
       
       # Configure OpenAI-compatible endpoint to your FastAPI backend
-      - OPENAI_BASE_URL=http://backend:8000
+      - OPENAI_API_BASE_URL=http://backend:8000/v1
       - OPENAI_API_KEY=dummy-key-for-openwebui  # Required by OpenWebUI, can be dummy since your backend doesn't require auth
+      
+      # Pipelines configuration
+      - PIPELINES_API_BASE_URL=http://pipelines:9099
+      - PIPELINES_API_KEY=medical-assistant-pipelines-key
       
       # WebUI Configuration
       - WEBUI_SECRET_KEY=your-medical-assistant-secret-key-change-this
@@ -116,18 +139,18 @@ services:
       
       # Additional configuration to ensure proper routing
       - ENABLE_OPENAI_API=true
-      - BACKEND_URL=http://backend:8000
     ports:
       - "3001:8080"  
     volumes:
       - open-webui-data:/app/backend/data
-      - ./pipelines:/app/backend/data/cache/pipelines:ro  
     depends_on:
       backend:
         condition: service_healthy
       postgres:
         condition: service_healthy
       redis:
+        condition: service_healthy
+      pipelines:
         condition: service_healthy
     networks:
       - chatapp-network
@@ -145,6 +168,8 @@ volumes:
   redis_data:
     driver: local
   open-webui-data:
+    driver: local
+  pipelines-data:
     driver: local
 
 networks:
